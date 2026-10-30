@@ -8,17 +8,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           submodules: recursive
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
-      - run: echo "releaseType=SelfBuilt" > package.properties
+          cache: gradle
+      - name: Package type and app id
+        run: printf "releaseType=SelfBuilt\nappIdOverride=com.prom3x209.player\n" > package.properties
+      - name: Make a signing key
+        run: |
+          keytool -genkeypair -keystore $HOME/key.jks -storetype PKCS12 -keyalg RSA -keysize 2048 -validity 10000 -alias key -storepass changeit -keypass changeit -dname "CN=prom3x"
+          mkdir -p ~/.gradle
+          {
+            echo "AKANE_RELEASE_STORE_FILE=$HOME/key.jks"
+            echo "AKANE_RELEASE_STORE_PASSWORD=changeit"
+            echo "AKANE_RELEASE_KEY_ALIAS=key"
+            echo "AKANE_RELEASE_KEY_PASSWORD=changeit"
+          } >> ~/.gradle/gradle.properties
       - name: Build
         run: |
           set -o pipefail
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --console=plain 2>&1 | tee build.log
+          ./gradlew :app:assembleRelease --no-daemon --console=plain 2>&1 | tee build.log
       - name: Report
         if: failure()
         run: |
@@ -26,5 +39,5 @@ jobs:
           echo "::warning::${msg}"
       - uses: actions/upload-artifact@v4
         with:
-          name: gramophone-debug
-          path: app/build/outputs/apk/**/*.apk
+          name: prom3xplayer-release
+          path: app/build/outputs/apk/release/*.apk
