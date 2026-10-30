@@ -1,0 +1,30 @@
+name: Build fork
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: echo "releaseType=SelfBuilt" > package.properties
+      - name: Build
+        run: |
+          set -o pipefail
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --console=plain 2>&1 | tee build.log
+      - name: Report
+        if: failure()
+        run: |
+          msg=$(grep -E "^e: |error:|What went wrong|Execution failed|AAPT|Unresolved|not found" -A3 build.log | head -25 | sed 's/%/%25/g' | tr -d '\r' | awk '{printf "%s%%0A", $0}')
+          echo "::warning::${msg}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gramophone-debug
+          path: app/build/outputs/apk/**/*.apk
