@@ -296,6 +296,7 @@ class FullBottomSheet
         bottomSheetFullQualityDetails = findViewById(R.id.quality_details)
         refreshSettings(null)
         prefs.registerOnSharedPreferenceChangeListener(this)
+PlayerPolish(this, activity).attach()
         activity.controllerViewModel.customCommandListeners.addCallback(activity.lifecycle) { _, command, _ ->
             when (command.customAction) {
                 GramophonePlaybackService.SERVICE_TIMER_CHANGED -> updateTimer()
