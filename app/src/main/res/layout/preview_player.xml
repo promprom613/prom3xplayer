@@ -7,6 +7,27 @@
     android:layout_height="wrap_content"
     tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
+    <ImageView
+        android:id="@+id/preview_bg"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <View
+        android:id="@+id/preview_dim"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="#A6000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/preview_album_frame"
         style="?materialCardViewFilledStyle"
@@ -16,6 +37,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
         android:backgroundTint="?attr/colorSurfaceContainer"
+        android:visibility="gone"
         app:cardCornerRadius="@dimen/list_round_corner_size"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -31,31 +53,34 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- TODO remove useless LinearLayout -->
     <LinearLayout
+        android:id="@+id/preview_text"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="18dp"
-        android:layout_marginBottom="1dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="16dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/preview_control"
-        app:layout_constraintStart_toEndOf="@id/preview_album_frame"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <org.akanework.gramophone.ui.components.MarqueeTextView
             android:id="@+id/preview_song_name"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?attr/colorOnSurface"
-            android:textSize="17sp"
+            android:textColor="#FFFFFFFF"
+            android:textSize="18sp"
+            app:textFontWeight="600"
             tools:text="Example title" />
 
         <org.akanework.gramophone.ui.components.MarqueeTextView
             android:id="@+id/preview_artist_name"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_marginTop="2dp"
+            android:textColor="#B3FFFFFF"
+            android:textSize="14sp"
             tools:text="Example Artist" />
     </LinearLayout>
 
@@ -63,20 +88,22 @@
         android:id="@+id/preview_control"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginStart="16dp"
-        android:background="@drawable/rp_buttons"
+        android:layout_marginTop="22dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="22dp"
+        android:background="@drawable/bg_circle_soft"
         android:contentDescription="@string/play"
         android:insetLeft="0dp"
         android:insetTop="0dp"
         android:insetRight="0dp"
         android:insetBottom="0dp"
-        app:icon="@drawable/play_anim"
+        app:icon="@drawable/ic_play_arrow_filled"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="24dp"
-        app:iconTint="?attr/colorOnSurface"
+        app:iconSize="26dp"
+        app:iconTint="#FFFFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/preview_next"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:tooltipText="@string/play" />
 
@@ -84,14 +111,13 @@
         android:id="@+id/preview_next"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="8dp"
         android:background="@drawable/rp_buttons"
         android:contentDescription="@string/skip_next"
         android:insetLeft="0dp"
         android:insetTop="0dp"
         android:insetRight="0dp"
         android:insetBottom="0dp"
+        android:visibility="gone"
         app:icon="@drawable/ic_skip_next"
         app:iconGravity="textStart"
         app:iconPadding="0dp"

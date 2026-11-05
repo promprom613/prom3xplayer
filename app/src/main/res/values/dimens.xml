@@ -11,7 +11,7 @@
     <!-- https://github.com/zhanghai/AndroidFastScroll/issues/3 -->
     <dimen name="afs_min_touch_target_size" tools:keep="@dimen/afs_min_touch_target_size">24dp
     </dimen>
-    <dimen name="decor_height">48dp</dimen>
+    <dimen name="decor_height">44dp</dimen>
     <dimen name="list_height">75dp</dimen>
     <dimen name="larger_list_height">78dp</dimen>
     <dimen name="grid_card_label_height">85sp</dimen>

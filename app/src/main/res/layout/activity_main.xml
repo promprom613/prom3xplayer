@@ -32,4 +32,24 @@
         app:shapeAppearance="@style/BottomPlayerCornerShape"
         tools:behavior_peekHeight="1000dp" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/idle_play"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="72dp"
+        android:background="@drawable/bg_idle_play"
+        android:contentDescription="@string/shuffle_all"
+        android:elevation="6dp"
+        android:insetLeft="0dp"
+        android:insetTop="0dp"
+        android:insetRight="0dp"
+        android:insetBottom="0dp"
+        android:visibility="gone"
+        app:icon="@drawable/ic_play_arrow_filled"
+        app:iconGravity="textStart"
+        app:iconPadding="0dp"
+        app:iconSize="40dp"
+        app:iconTint="#FF000000" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

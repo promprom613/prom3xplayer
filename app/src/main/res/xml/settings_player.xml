@@ -68,7 +68,16 @@
             android:widgetLayout="@layout/preference_switch_widget" />
 
         <SwitchPreferenceCompat
-            android:defaultValue="false"
+            android:defaultValue="true"
+            android:icon="@drawable/ic_high_res"
+            android:key="haptic_tick"
+            android:layout="@layout/preference_switch"
+            android:summary="Short tick when the song changes, starts, pauses or continues"
+            android:title="Haptic tick"
+            android:widgetLayout="@layout/preference_switch_widget" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
             android:icon="@drawable/ic_high_res"
             android:key="audio_quality_info"
             android:layout="@layout/preference_switch"

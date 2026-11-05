@@ -36,6 +36,7 @@ import android.util.AttributeSet
 import android.view.AbsSavedState
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
@@ -166,7 +167,8 @@ class FullBottomSheet
     private var isUserTracking = false
     private var runnableRunning = false
     private var firstTime = false
-    private var enableQualityInfo = false
+    private var enableQualityInfo = true
+    private var polish: PlayerPolish? = null
 
     private val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     private var currentFormat: AudioFormatDetector.AudioFormats? = null
@@ -296,7 +298,7 @@ class FullBottomSheet
         bottomSheetFullQualityDetails = findViewById(R.id.quality_details)
         refreshSettings(null)
         prefs.registerOnSharedPreferenceChangeListener(this)
-PlayerPolish(this, activity).attach()
+        polish = PlayerPolish(this, activity).also { it.attach() }
         activity.controllerViewModel.customCommandListeners.addCallback(activity.lifecycle) { _, command, _ ->
             when (command.customAction) {
                 GramophonePlaybackService.SERVICE_TIMER_CHANGED -> updateTimer()
@@ -681,7 +683,7 @@ PlayerPolish(this, activity).attach()
             }
         }
         if (key == null || key == "audio_quality_info") {
-            enableQualityInfo = prefs.getBooleanStrict("audio_quality_info", false)
+            enableQualityInfo = prefs.getBooleanStrict("audio_quality_info", true)
             updateQualityIndicators(
                 if (enableQualityInfo)
                     AudioFormatDetector.detectAudioFormat(currentFormat) else null
@@ -1536,12 +1538,8 @@ PlayerPolish(this, activity).attach()
                 bottomSheetFullControllerButton.icon =
                     AppCompatResources.getDrawable(
                         wrappedContext ?: context,
-                        R.drawable.play_anim
+                        R.drawable.ic_pause_filled
                     )
-                bottomSheetFullControllerButton.background =
-                    AppCompatResources.getDrawable(context, R.drawable.bg_play_anim)
-                bottomSheetFullControllerButton.icon.startAnimation()
-                bottomSheetFullControllerButton.background.startAnimation()
                 bottomSheetFullControllerButton.setTag(R.id.play_next, 1)
             }
             if (!isUserTracking) {
@@ -1557,12 +1555,8 @@ PlayerPolish(this, activity).attach()
                 bottomSheetFullControllerButton.icon =
                     AppCompatResources.getDrawable(
                         wrappedContext ?: context,
-                        R.drawable.pause_anim
+                        R.drawable.ic_play_arrow_filled
                     )
-                bottomSheetFullControllerButton.background =
-                    AppCompatResources.getDrawable(context, R.drawable.bg_pause_anim)
-                bottomSheetFullControllerButton.icon.startAnimation()
-                bottomSheetFullControllerButton.background.startAnimation()
                 bottomSheetFullControllerButton.setTag(R.id.play_next, 2)
                 bottomSheetFullCover.stopRotation()
             }
@@ -1590,6 +1584,20 @@ PlayerPolish(this, activity).attach()
 
             else -> super.onKeyUp(keyCode, event)
         }
+    }
+
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        if (polish?.handleTouch(ev) == true) return true
+        return super.onInterceptTouchEvent(ev)
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        val p = polish
+        if (p != null) {
+            if (p.handleTouch(event)) return true
+            if (event.actionMasked == MotionEvent.ACTION_DOWN && p.isTracking) return true
+        }
+        return super.onTouchEvent(event)
     }
 
     private val positionRunnable = object : Runnable {

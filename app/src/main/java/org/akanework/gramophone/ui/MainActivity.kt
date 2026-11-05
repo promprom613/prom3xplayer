@@ -215,6 +215,7 @@ class MainActivity : BaseActivity() {
                 // we handle that case in BaseFragment
                 if (f is BaseFragment && f.wantsPlayer != null) {
                     playerBottomSheet.visible = f.wantsPlayer
+                    updateIdlePlay()
                 }
             }
         }, false)
@@ -231,6 +232,33 @@ class MainActivity : BaseActivity() {
             })
         }
         playerBottomSheet = findViewById(R.id.player_layout)
+        findViewById<android.view.View>(R.id.idle_play).setOnClickListener {
+            getPlayer()?.let { controller ->
+                controller.shuffleModeEnabled = true
+                controller.setMediaItem(
+                    MediaItem.Builder()
+                        .setRequestMetadata(
+                            MediaItem.RequestMetadata.Builder()
+                                .setSearchQuery("") // empty = every song
+                                .build()
+                        )
+                        .build()
+                )
+                controller.prepare()
+                controller.play()
+            }
+        }
+        controllerViewModel.addRecreationalPlayerListener(
+            lifecycle,
+            object : androidx.media3.common.Player.Listener {
+                override fun onEvents(
+                    player: androidx.media3.common.Player,
+                    events: androidx.media3.common.Player.Events
+                ) {
+                    updateIdlePlay()
+                }
+            }
+        ) { updateIdlePlay() }
 
         // Check all permissions.
         if (!hasAudioPermission()) {
@@ -844,6 +872,14 @@ class MainActivity : BaseActivity() {
      *   Returns a media controller.
      */
     fun getPlayer() = controllerViewModel.get()
+
+    private fun updateIdlePlay() {
+        if (!::playerBottomSheet.isInitialized) return
+        val b = findViewById<android.view.View>(R.id.idle_play) ?: return
+        val p = getPlayer()
+        val idle = p != null && p.mediaItemCount == 0 && playerBottomSheet.visible
+        b.visibility = if (idle) android.view.View.VISIBLE else android.view.View.GONE
+    }
 
     inline val reader
         get() = gramophoneApplication.reader
