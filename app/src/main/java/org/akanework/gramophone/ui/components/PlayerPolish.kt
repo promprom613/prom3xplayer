@@ -12,9 +12,7 @@ import android.graphics.drawable.TransitionDrawable
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
+import android.os.SystemClock
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
@@ -26,12 +24,14 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
-import androidx.preference.PreferenceManager
 import coil3.asDrawable
 import coil3.imageLoader
 import coil3.request.Disposable
@@ -42,6 +42,7 @@ import coil3.request.error
 import coil3.size.Scale
 import com.google.android.material.card.MaterialCardView
 import org.akanework.gramophone.R
+import org.akanework.gramophone.logic.Haptics
 import org.akanework.gramophone.ui.MainActivity
 import kotlin.math.abs
 
@@ -152,6 +153,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     }
 
     private class Views(
+        val cover: ImageView,
         val bg: ImageView,
         val dim: View,
         val details: TextView,
@@ -167,8 +169,6 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     private val handler = Handler(Looper.getMainLooper())
     private val slop = ViewConfiguration.get(sheet.context).scaledTouchSlop
     private val density = sheet.context.resources.displayMetrics.density
-    private val prefs = PreferenceManager.getDefaultSharedPreferences(sheet.context.applicationContext)
-    private val vibrator: Vibrator? = findVibrator()
 
     private var disposable: Disposable? = null
     private var lastArt: Any? = null
@@ -189,9 +189,34 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     private var animDone = false
     private var transitionSeen = false
     private var awaitingId: String? = null
+    private var awaitingItem: MediaItem? = null
+    private var beforeUri: Any? = null
+    private var beforeDrawable: Drawable? = null
+    private var deadline = 0L
     private var lastExclusion: Rect? = null
 
-    private val revealRunnable = Runnable { reveal() }
+    private val pollRunnable = object : Runnable {
+        override fun run() {
+            if (!commitPending || !animDone) return
+            if ((transitionSeen && realMatchesTarget()) || SystemClock.uptimeMillis() > deadline) {
+                startReveal()
+            } else {
+                handler.postDelayed(this, 30L)
+            }
+        }
+    }
+
+    private val hapticListener = object : Player.Listener {
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK) Haptics.tick(sheet.context)
+        }
+
+        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+            if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST) {
+                Haptics.tick(sheet.context)
+            }
+        }
+    }
 
     private val listener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -199,7 +224,6 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
             if (commitPending) {
                 if (mediaItem?.mediaId == awaitingId) {
                     transitionSeen = true
-                    if (animDone) tryReveal()
                 }
             } else {
                 refreshGhosts()
@@ -227,6 +251,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
 
     private fun build(): Views? {
         fun <T : View> f(id: Int): T? = sheet.findViewById<T>(id)
+        val cover = f<ImageView>(R.id.full_sheet_cover) ?: return null
         val bg = f<ImageView>(R.id.bg_blur) ?: return null
         val dim = f<View>(R.id.bg_dim) ?: return null
         val details = f<TextView>(R.id.full_song_details) ?: return null
@@ -248,10 +273,19 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
             f<TextView>(R.id.ghost_artist_next) ?: return null,
             f<TextView>(R.id.ghost_details_next) ?: return null
         )
-        return Views(bg, dim, details, title, artist, coverFrame, textLayout, gPrev, gNext)
+        return Views(cover, bg, dim, details, title, artist, coverFrame, textLayout, gPrev, gNext)
     }
 
     fun attach() {
+        activity.lifecycle.addObserver(object : LifecycleEventObserver {
+            override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+                if (event == Lifecycle.Event.ON_START) Haptics.uiActive = true
+                else if (event == Lifecycle.Event.ON_STOP) Haptics.uiActive = false
+            }
+        })
+        activity.controllerViewModel.addRecreationalPlayerListener(
+            activity.lifecycle, hapticListener
+        ) { }
         val v = views ?: return
         v.coverFrame.radius = 0f
         v.title.gravity = Gravity.CENTER
@@ -403,12 +437,11 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
 
     private fun inRegion(x: Float, y: Float): Boolean {
         val v = views ?: return false
-        for (t in listOf(v.coverFrame, v.textLayout)) {
-            val r = Rect(0, 0, t.width, t.height)
-            sheet.offsetDescendantRectToMyCoords(t, r)
-            if (r.contains(x.toInt(), y.toInt())) return true
-        }
-        return false
+        val cr = Rect(0, 0, v.coverFrame.width, v.coverFrame.height)
+        sheet.offsetDescendantRectToMyCoords(v.coverFrame, cr)
+        val tr = Rect(0, 0, v.textLayout.width, v.textLayout.height)
+        sheet.offsetDescendantRectToMyCoords(v.textLayout, tr)
+        return y >= cr.top && y <= tr.bottom
     }
 
     /** Returns true when the swipe gesture owns this touch stream. */
@@ -438,6 +471,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
                 if (!dragging) {
                     if (abs(dx) > slop && abs(dx) > abs(dy) * 1.2f) {
                         refreshGhosts()
+                        setLayers(true)
                         dragging = true
                         sheet.parent?.requestDisallowInterceptTouchEvent(true)
                     } else if (abs(dy) > slop) {
@@ -477,13 +511,16 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         val v = views ?: return
         currentC = c
         val w = sheet.width.toFloat().coerceAtLeast(1f)
+        val p = (abs(c) / w).coerceIn(0f, 1f)
+        val ov = 3f * (1f - p) // tiny overlap so no seam/bar shows between the two covers
         v.coverFrame.translationX = c
         v.textLayout.translationX = c
-        setGhost(v.gPrev, c > 0f && prevItem != null, c - w)
-        setGhost(v.gNext, c < 0f && nextItem != null, c + w)
+        v.textLayout.alpha = 1f - p
+        setGhost(v.gPrev, c > 0f && prevItem != null, c - w + ov, p)
+        setGhost(v.gNext, c < 0f && nextItem != null, c + w - ov, p)
     }
 
-    private fun setGhost(g: Ghost, show: Boolean, tx: Float) {
+    private fun setGhost(g: Ghost, show: Boolean, tx: Float, textAlpha: Float) {
         val vis = if (show) View.VISIBLE else View.INVISIBLE
         if (g.cover.visibility != vis) {
             g.cover.visibility = vis
@@ -491,6 +528,16 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         }
         g.cover.translationX = tx
         g.text.translationX = tx
+        g.text.alpha = textAlpha
+    }
+
+    private fun setLayers(on: Boolean) {
+        val v = views ?: return
+        val type = if (on) View.LAYER_TYPE_HARDWARE else View.LAYER_TYPE_NONE
+        for (x in listOf(v.coverFrame, v.textLayout, v.gPrev.cover, v.gNext.cover,
+            v.gPrev.text, v.gNext.text)) {
+            x.setLayerType(type, null)
+        }
     }
 
     private fun endDrag(dx: Float, vx: Float, canceled: Boolean) {
@@ -506,6 +553,9 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
             commitPending = true
             animDone = false
             awaitingId = target?.mediaId
+            awaitingItem = target
+            beforeUri = p.currentMediaItem?.mediaMetadata?.artworkUri
+            beforeDrawable = views?.cover?.drawable
             transitionSeen = target?.mediaId == p.currentMediaItem?.mediaId
             if (dir > 0) {
                 val wasRestart = restart
@@ -515,13 +565,16 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
                 p.seekToNext()
             }
         }
-        animateTo(if (commit) dir * w else 0f, commit)
+        animateTo(if (commit) dir * w else 0f, commit, vx)
     }
 
-    private fun animateTo(target: Float, commit: Boolean) {
+    private fun animateTo(target: Float, commit: Boolean, vx: Float) {
+        val dist = abs(target - currentC)
+        val speed = maxOf(abs(vx), 1800f * density)
+        val dur = (dist / speed * 1000f).toLong().coerceIn(if (commit) 170L else 150L, 320L)
         val a = ValueAnimator.ofFloat(currentC, target)
-        a.duration = if (commit) 220 else 180
-        a.interpolator = DecelerateInterpolator()
+        a.duration = dur
+        a.interpolator = DecelerateInterpolator(1.5f)
         a.addUpdateListener { translate(it.animatedValue as Float) }
         a.addListener(object : AnimatorListenerAdapter() {
             override fun onAnimationEnd(animation: Animator) {
@@ -531,6 +584,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
                     tryReveal()
                 } else {
                     translate(0f)
+                    setLayers(false)
                 }
             }
         })
@@ -540,43 +594,46 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
 
     private fun tryReveal() {
         if (!commitPending || !animDone) return
-        handler.removeCallbacks(revealRunnable)
-        handler.postDelayed(revealRunnable, if (transitionSeen) 140L else 900L)
+        handler.removeCallbacks(pollRunnable)
+        deadline = SystemClock.uptimeMillis() + 900L
+        handler.post(pollRunnable)
     }
 
-    private fun reveal() {
-        handler.removeCallbacks(revealRunnable)
+    private fun realMatchesTarget(): Boolean {
+        val v = views ?: return true
+        val md = awaitingItem?.mediaMetadata ?: return true
+        val titleOk = v.title.text?.toString() == (md.title?.toString() ?: "")
+        val artOk = md.artworkUri == beforeUri || v.cover.drawable !== beforeDrawable
+        return titleOk && artOk
+    }
+
+    /** Real views slide back in underneath, the ghost fades out on top: no pop. */
+    private fun startReveal() {
+        val v = views ?: return
+        handler.removeCallbacks(pollRunnable)
+        v.coverFrame.translationX = 0f
+        v.textLayout.translationX = 0f
+        v.textLayout.alpha = 1f
+        val g = if (currentC > 0f) v.gPrev else v.gNext
+        g.cover.animate().alpha(0f).setDuration(180L).start()
+        g.text.animate().alpha(0f).setDuration(180L).withEndAction { finishReveal() }.start()
+    }
+
+    private fun finishReveal() {
+        val v = views ?: return
         commitPending = false
         animDone = false
         transitionSeen = false
         awaitingId = null
+        awaitingItem = null
+        v.gPrev.cover.alpha = 1f
+        v.gNext.cover.alpha = 1f
         translate(0f)
+        setLayers(false)
         refreshGhosts()
     }
 
-    // ---------------------------------------------------------------- haptics (UI side, restart only)
-
-    @Suppress("DEPRECATION")
-    private fun findVibrator(): Vibrator? {
-        val ctx = activity
-        return if (Build.VERSION.SDK_INT >= 31) {
-            (ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-        } else {
-            ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-        }
-    }
-
-    @Suppress("DEPRECATION")
     private fun tick() {
-        if (!prefs.getBoolean("haptic_tick", true)) return
-        val vib = vibrator ?: return
-        if (!vib.hasVibrator()) return
-        if (Build.VERSION.SDK_INT >= 29) {
-            vib.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
-        } else if (Build.VERSION.SDK_INT >= 26) {
-            vib.vibrate(VibrationEffect.createOneShot(12L, 80))
-        } else {
-            vib.vibrate(12L)
-        }
+        Haptics.tick(sheet.context)
     }
 }

@@ -25,6 +25,7 @@
             app:expandedTitleTextAppearance="?textAppearanceHeadlineLarge"
             app:expandedTitleTextColor="?attr/colorOnSurface"
             app:layout_scrollFlags="scroll|enterAlways"
+            android:visibility="gone"
             app:titleEnabled="false">
 
             <com.google.android.material.appbar.MaterialToolbar

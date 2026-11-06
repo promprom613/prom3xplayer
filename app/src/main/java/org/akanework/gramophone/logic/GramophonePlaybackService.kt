@@ -1323,31 +1323,10 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
             })
     }
 
-    @Suppress("DEPRECATION")
     private fun hapticTick() {
-        if (!prefs.getBoolean("haptic_tick", true)) return
-        try {
-            val vib: android.os.Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                (getSystemService(android.content.Context.VIBRATOR_MANAGER_SERVICE)
-                        as? android.os.VibratorManager)?.defaultVibrator
-            } else {
-                getSystemService(android.content.Context.VIBRATOR_SERVICE) as? android.os.Vibrator
-            }
-            if (vib == null || !vib.hasVibrator()) return
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                vib.vibrate(
-                    android.os.VibrationEffect.createPredefined(
-                        android.os.VibrationEffect.EFFECT_TICK
-                    )
-                )
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vib.vibrate(android.os.VibrationEffect.createOneShot(12L, 80))
-            } else {
-                vib.vibrate(12L)
-            }
-        } catch (_: Exception) {
-            // haptics are best effort only
-        }
+        // when the app UI is visible, PlayerPolish handles the tick
+        if (Haptics.uiActive) return
+        Haptics.tick(this, background = true)
     }
 
     override fun onPlayWhenReadyChanged(

@@ -48,6 +48,7 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     private val dpHeight = context.resources.getDimensionPixelSize(R.dimen.decor_height)
     private var recyclerView: MyRecyclerView? = null
     private var prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
+    private var hostPager: org.akanework.gramophone.ui.fragments.ViewPagerFragment? = null
     var jumpUpPos: (() -> Int)? = null
     var jumpDownPos: (() -> Int)? = null
     var offsetPos: (() -> Int)? = null
@@ -57,6 +58,12 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         viewType: Int,
     ): ViewHolder {
         val view = adapter.layoutInflater.inflate(R.layout.general_decor, parent, false)
+        hostPager = try {
+            androidx.fragment.app.FragmentManager.findFragment<androidx.fragment.app.Fragment>(parent)
+                .parentFragment as? org.akanework.gramophone.ui.fragments.ViewPagerFragment
+        } catch (_: Exception) {
+            null
+        }
         return ViewHolder(view)
     }
 
@@ -68,6 +75,29 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         holder.shuffleAll.visibility =
             if (adapter is SongAdapter && adapter.isSubFragment != R.id.songs ||
                 adapter is AlbumAdapter) View.VISIBLE else View.GONE
+        val topLevel = hostPager != null
+        if (topLevel) {
+            // library header = one row: count | sort, search, menu
+            holder.playAll.visibility = View.GONE
+            holder.shuffleAll.visibility = View.GONE
+        }
+        holder.search.visibility = if (topLevel) View.VISIBLE else View.GONE
+        holder.more.visibility = if (topLevel) View.VISIBLE else View.GONE
+        holder.search.setOnClickListener {
+            (context as? org.akanework.gramophone.ui.MainActivity)?.startFragment(
+                org.akanework.gramophone.ui.fragments.SearchFragment()
+            )
+        }
+        holder.more.setOnClickListener { anchor ->
+            val pm = PopupMenu(context, anchor)
+            pm.inflate(R.menu.home_menu)
+            pm.menu.removeItem(R.id.search)
+            pm.setOnMenuItemClickListener { item ->
+                hostPager?.runMenuItem(item.itemId)
+                true
+            }
+            pm.show()
+        }
         holder.counter.text = context.resources.getQuantityString(pluralStr, count, count)
         if (adapter is SongAdapter) {
             holder.counter.setOnClickListener {
@@ -285,6 +315,8 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
 
     override fun onViewRecycled(holder: ViewHolder) {
         holder.sortButton.setOnClickListener(null)
+        holder.search.setOnClickListener(null)
+        holder.more.setOnClickListener(null)
         holder.playAll.setOnClickListener(null)
         holder.shuffleAll.setOnClickListener(null)
         holder.jumpUp.setOnClickListener(null)
@@ -341,6 +373,8 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         val createPlaylist: MaterialButton = view.findViewById(R.id.create_playlist)
         val playAll: MaterialButton = view.findViewById(R.id.play_all)
         val shuffleAll: MaterialButton = view.findViewById(R.id.shuffle_all)
+        val search: MaterialButton = view.findViewById(R.id.decor_search)
+        val more: MaterialButton = view.findViewById(R.id.decor_more)
         val jumpUp: MaterialButton = view.findViewById(R.id.jumpUp)
         val jumpDown: MaterialButton = view.findViewById(R.id.jumpDown)
         val counter: TextView = view.findViewById(R.id.song_counter)

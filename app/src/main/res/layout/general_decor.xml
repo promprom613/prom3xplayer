@@ -99,6 +99,44 @@
             app:tooltipText="@string/sort" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/decor_search"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/rp_buttons"
+            android:contentDescription="Search"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:visibility="gone"
+            app:icon="@drawable/ic_search"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="24dp"
+            app:iconTint="?attr/colorPrimary"
+            app:tooltipText="Search"
+            tools:visibility="visible" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/decor_more"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/rp_buttons"
+            android:contentDescription="More"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:visibility="gone"
+            app:icon="@drawable/ic_more_vert_alt"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="24dp"
+            app:iconTint="?attr/colorPrimary"
+            app:tooltipText="More"
+            tools:visibility="visible" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/jumpUp"
             android:layout_width="48dp"
             android:layout_height="48dp"

@@ -71,6 +71,14 @@ class ViewPagerFragment : BaseFragment(true) {
     lateinit var appBarLayout: AppBarLayout
         private set
     val recycledViewPool = RecyclerView.RecycledViewPool()
+    private var menuHandler: androidx.appcompat.widget.Toolbar.OnMenuItemClickListener? = null
+    private var homeToolbar: MaterialToolbar? = null
+
+    /** Runs a home_menu action (used by the library header's own search/menu buttons). */
+    fun runMenuItem(id: Int) {
+        val item = homeToolbar?.menu?.findItem(id) ?: return
+        menuHandler?.onMenuItemClick(item)
+    }
     private lateinit var viewPager2: ViewPager2
     private lateinit var adapter: ViewPager2Adapter
 
@@ -89,7 +97,8 @@ class ViewPagerFragment : BaseFragment(true) {
         topAppBar.overflowIcon =
             AppCompatResources.getDrawable(requireContext(), R.drawable.ic_more_vert_alt_topappbar)
 
-        topAppBar.setOnMenuItemClickListener { it ->
+        homeToolbar = topAppBar
+        val menuClick = androidx.appcompat.widget.Toolbar.OnMenuItemClickListener { it ->
             val activity = requireActivity() as MainActivity
             when (it.itemId) {
                 R.id.search -> {
@@ -210,6 +219,8 @@ class ViewPagerFragment : BaseFragment(true) {
             }
             true
         }
+        menuHandler = menuClick
+        topAppBar.setOnMenuItemClickListener(menuClick)
 
         // Connect ViewPager2.
 
