@@ -33,7 +33,7 @@
     <View
         android:id="@+id/bg_bottom_fade"
         android:layout_width="0dp"
-        android:layout_height="460dp"
+        android:layout_height="260dp"
         android:background="@drawable/fade_bottom"
         android:importantForAccessibility="no"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -104,6 +104,18 @@
         app:layout_constraintVertical_bias="0.0"
         app:toggleCheckedStateOnClick="false"
         app:tooltipText="@string/timer" />
+
+    <View
+        android:id="@+id/swipe_scrim"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:alpha="0"
+        android:background="#FF000000"
+        android:importantForAccessibility="no"
+        app:layout_constraintBottom_toBottomOf="@id/album_cover_frame"
+        app:layout_constraintEnd_toEndOf="@id/album_cover_frame"
+        app:layout_constraintStart_toStartOf="@id/album_cover_frame"
+        app:layout_constraintTop_toTopOf="@id/album_cover_frame" />
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/album_cover_frame"

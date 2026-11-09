@@ -158,6 +158,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         val bg: ImageView,
         val dim: View,
         val fade: View?,
+        val scrim: View?,
         val slider: View?,
         val details: TextView,
         val title: TextView,
@@ -263,7 +264,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
             f<TextView>(R.id.ghost_details_next) ?: return null
         )
         return Views(
-            cover, bg, dim, f<View>(R.id.bg_bottom_fade), f<View>(R.id.slider),
+            cover, bg, dim, f<View>(R.id.bg_bottom_fade), f<View>(R.id.swipe_scrim), f<View>(R.id.slider),
             details, title, artist, coverFrame, textLayout, gPrev, gNext
         )
     }
@@ -553,15 +554,19 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         // outgoing fades out while the incoming fades in (only when there is an incoming page)
         val pa = if (showPrev || showNext) p else 0f
         val ov = 3f * (1f - p) // tiny overlap so no seam/bar shows between the two covers
+        // covers dip through black: outgoing dies fast, incoming rises slowly, black underlay shows
+        val outA = Math.pow((1f - pa).toDouble(), 1.7).toFloat()
+        val inA = Math.pow(pa.toDouble(), 1.7).toFloat()
+        v.scrim?.alpha = minOf(1f, pa * 6f)
         v.coverFrame.translationX = c
-        v.coverFrame.alpha = 1f - pa
+        v.coverFrame.alpha = outA
         v.textLayout.translationX = c
         v.textLayout.alpha = 1f - pa
-        setGhost(v.gPrev, showPrev, c - w + ov, pa)
-        setGhost(v.gNext, showNext, c + w - ov, pa)
+        setGhost(v.gPrev, showPrev, c - w + ov, inA, pa)
+        setGhost(v.gNext, showNext, c + w - ov, inA, pa)
     }
 
-    private fun setGhost(g: Ghost, show: Boolean, tx: Float, alpha: Float) {
+    private fun setGhost(g: Ghost, show: Boolean, tx: Float, coverAlpha: Float, alpha: Float) {
         val vis = if (show) View.VISIBLE else View.INVISIBLE
         if (g.cover.visibility != vis) {
             g.cover.visibility = vis
@@ -569,7 +574,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         }
         g.cover.translationX = tx
         g.text.translationX = tx
-        g.cover.alpha = alpha
+        g.cover.alpha = coverAlpha
         g.text.alpha = alpha
     }
 
