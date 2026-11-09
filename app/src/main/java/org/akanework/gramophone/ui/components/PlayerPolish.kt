@@ -616,8 +616,8 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         settle?.cancel()
         val a = ValueAnimator.ofFloat(currentC, target)
         if (commit) {
-            a.duration = (240f + 200f * frac).toLong()
-            a.interpolator = DecelerateInterpolator(2.2f)
+            a.duration = (620f + 420f * frac).toLong()
+            a.interpolator = android.view.animation.PathInterpolator(0.2f, 0.75f, 0.12f, 1f)
         } else {
             a.duration = (140f + 140f * frac).toLong()
             a.interpolator = DecelerateInterpolator(1.5f)

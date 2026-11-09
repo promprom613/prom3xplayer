@@ -33,7 +33,7 @@
     <View
         android:id="@+id/bg_bottom_fade"
         android:layout_width="0dp"
-        android:layout_height="260dp"
+        android:layout_height="460dp"
         android:background="@drawable/fade_bottom"
         android:importantForAccessibility="no"
         app:layout_constraintBottom_toBottomOf="parent"
