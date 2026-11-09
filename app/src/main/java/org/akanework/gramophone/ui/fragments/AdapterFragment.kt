@@ -71,8 +71,17 @@ class AdapterFragment : BaseFragment(null) {
         if (savedInstanceState?.containsKey("pendingRequest") == true) {
             pendingRequest = savedInstanceState.getBundle("pendingRequest")
         }
-        val rootView = inflater.inflate(R.layout.fragment_recyclerview, container, false)
-        recyclerView = rootView.findViewById(R.id.recyclerview)
+        val listView = inflater.inflate(R.layout.fragment_recyclerview, container, false)
+        // wrapper so the library "N songs" row can stay pinned on top while scrolling
+        val rootView = android.widget.FrameLayout(inflater.context).apply {
+            tag = org.akanework.gramophone.ui.adapters.BaseDecorAdapter.STICKY_TAG
+            addView(
+                listView, android.widget.FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            )
+        }
+        recyclerView = listView.findViewById(R.id.recyclerview)
         recyclerView.setRecycledViewPool((requireParentFragment() as ViewPagerFragment).recycledViewPool)
         recyclerView.enableEdgeToEdgePaddingListener()
         adapter = createAdapter(savedInstanceState)

@@ -18,9 +18,11 @@
 package org.akanework.gramophone.ui.adapters
 
 import android.content.Context
+import android.view.Gravity
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.edit
@@ -29,6 +31,7 @@ import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.color.MaterialColors
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.akanework.gramophone.R
@@ -49,6 +52,12 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     private var recyclerView: MyRecyclerView? = null
     private var prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     private var hostPager: org.akanework.gramophone.ui.fragments.ViewPagerFragment? = null
+    private var stickyPending = false
+    private var stickyView: View? = null
+    private var stickyHolder: ViewHolder? = null
+    private var stickyFrame: FrameLayout? = null
+    private var stickyScroll: RecyclerView.OnScrollListener? = null
+    private var stickyLayout: View.OnLayoutChangeListener? = null
     var jumpUpPos: (() -> Int)? = null
     var jumpDownPos: (() -> Int)? = null
     var offsetPos: (() -> Int)? = null
@@ -64,10 +73,93 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         } catch (_: Exception) {
             null
         }
+        if (hostPager != null) setupSticky(parent)
         return ViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        bindDecor(holder)
+        // keep the pinned copy in sync with the real row
+        stickyHolder?.let { if (it !== holder) bindDecor(it) }
+    }
+
+    // ------------------------------------------------ pinned copy of the row (library tabs only)
+
+    private fun setupSticky(rvGroup: ViewGroup) {
+        if (stickyView != null || stickyPending) return
+        val rv = rvGroup as? RecyclerView ?: return
+        stickyPending = true
+        // not while the list is in the middle of its own layout pass
+        rv.post {
+            stickyPending = false
+            if (recyclerView === rv && stickyView == null) createSticky(rv)
+        }
+    }
+
+    private fun createSticky(rv: RecyclerView) {
+        val frame = rv.parent as? FrameLayout ?: return
+        if (frame.tag != STICKY_TAG) return
+        val v = adapter.layoutInflater.inflate(R.layout.general_decor, frame, false)
+        v.setBackgroundColor(
+            MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
+        )
+        v.layoutParams = FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, dpHeight, Gravity.TOP
+        )
+        v.setPadding(rv.paddingLeft, 0, rv.paddingRight, 0)
+        v.translationY = rv.paddingTop.toFloat()
+        v.visibility = View.INVISIBLE
+        v.isClickable = true // swallow stray touches so the list below does not scroll under it
+        val h = ViewHolder(v)
+        frame.addView(v)
+        stickyView = v
+        stickyHolder = h
+        stickyFrame = frame
+        bindDecor(h)
+        val sl = object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                updateSticky()
+            }
+        }
+        val ll = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateSticky() }
+        stickyScroll = sl
+        stickyLayout = ll
+        rv.addOnScrollListener(sl)
+        rv.addOnLayoutChangeListener(ll)
+    }
+
+    private fun updateSticky() {
+        val rv = recyclerView ?: return
+        val v = stickyView ?: return
+        val first = rv.findViewHolderForAdapterPosition(0)
+        val show = when {
+            rv.childCount == 0 -> false
+            first == null -> true // scrolled far away from the top
+            first !is ViewHolder -> false
+            else -> first.itemView.top < rv.paddingTop
+        }
+        val vis = if (show) View.VISIBLE else View.INVISIBLE
+        if (v.visibility != vis) {
+            if (show) stickyHolder?.let { bindDecor(it) }
+            v.visibility = vis
+        }
+        val ty = rv.paddingTop.toFloat()
+        if (v.translationY != ty) v.translationY = ty
+    }
+
+    private fun removeSticky() {
+        val rv = recyclerView
+        stickyScroll?.let { rv?.removeOnScrollListener(it) }
+        stickyLayout?.let { rv?.removeOnLayoutChangeListener(it) }
+        stickyView?.let { stickyFrame?.removeView(it) }
+        stickyScroll = null
+        stickyLayout = null
+        stickyView = null
+        stickyHolder = null
+        stickyFrame = null
+    }
+
+    private fun bindDecor(holder: ViewHolder) {
         val count = adapter.itemCountForDecor
         holder.playAll.visibility =
             if (adapter is SongAdapter && adapter.isSubFragment != R.id.songs ||
@@ -330,6 +422,7 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     }
 
     override fun onDetachedFromRecyclerView(recyclerView: MyRecyclerView) {
+        removeSticky()
         super.onDetachedFromRecyclerView(recyclerView)
         this.recyclerView = null
     }
@@ -363,6 +456,10 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     protected open fun onSortButtonPressed(popupMenu: PopupMenu) {}
     protected open fun onExtraMenuButtonPressed(menuItem: MenuItem): Boolean = false
 
+    companion object {
+        const val STICKY_TAG = "p3x_sticky_host"
+    }
+
     override fun getItemCount(): Int = 1
     override fun getItemViewType(position: Int): Int = R.layout.general_decor
 
@@ -382,6 +479,7 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
 
     fun updateSongCounter() {
         notifyItemChanged(0)
+        stickyHolder?.let { bindDecor(it) }
     }
 
     override fun getItemHeightFromZeroTo(to: Int): Int {

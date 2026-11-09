@@ -135,8 +135,9 @@ object ArtBlur {
 }
 
 /**
- * Stage 2 polish for the full player: blurred background with crossfade, album/year line,
- * swipe left/right on cover + title to change song (page follows the finger), gesture exclusion.
+ * Polish for the full player: blurred background with crossfade, album/year line,
+ * swipe left/right to change song (page follows the finger, fast slide then slow brake,
+ * crossfade between the songs, never locks), gesture exclusion.
  * Every lookup is null-safe: layouts without the new views (e.g. landscape tablet layout)
  * simply get no polish instead of a crash.
  */
@@ -156,6 +157,8 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         val cover: ImageView,
         val bg: ImageView,
         val dim: View,
+        val fade: View?,
+        val slider: View?,
         val details: TextView,
         val title: TextView,
         val artist: TextView,
@@ -166,7 +169,6 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     )
 
     private val views: Views? = build()
-    private val handler = Handler(Looper.getMainLooper())
     private val slop = ViewConfiguration.get(sheet.context).scaledTouchSlop
     private val density = sheet.context.resources.displayMetrics.density
 
@@ -177,6 +179,8 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     var isTracking = false
         private set
     private var dragging = false
+    private var grabbed = false
+    private var dragBase = 0f
     private var startX = 0f
     private var startY = 0f
     private var velocity: VelocityTracker? = null
@@ -185,26 +189,17 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     private var prevItem: MediaItem? = null
     private var nextItem: MediaItem? = null
     private var restart = false
-    private var commitPending = false
-    private var animDone = false
-    private var transitionSeen = false
-    private var awaitingId: String? = null
-    private var awaitingItem: MediaItem? = null
-    private var beforeUri: Any? = null
-    private var beforeDrawable: Drawable? = null
-    private var deadline = 0L
     private var lastExclusion: Rect? = null
+    private var lastDownTime = -1L
+    private var lastDownEvent = -1L
 
-    private val pollRunnable = object : Runnable {
-        override fun run() {
-            if (!commitPending || !animDone) return
-            if ((transitionSeen && realMatchesTarget()) || SystemClock.uptimeMillis() > deadline) {
-                startReveal()
-            } else {
-                handler.postDelayed(this, 30L)
-            }
-        }
-    }
+    // commit (song change) state
+    private var committing = false
+    private var commitDir = 0
+    private var commitTarget: MediaItem? = null
+    private var commitOld: MediaItem? = null
+    private var commitOldDrawable: Drawable? = null
+    private var syncWait: String? = null
 
     private val hapticListener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
@@ -221,13 +216,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     private val listener = object : Player.Listener {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             loadBackground(mediaItem)
-            if (commitPending) {
-                if (mediaItem?.mediaId == awaitingId) {
-                    transitionSeen = true
-                }
-            } else {
-                refreshGhosts()
-            }
+            refreshGhosts()
         }
 
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -273,7 +262,10 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
             f<TextView>(R.id.ghost_artist_next) ?: return null,
             f<TextView>(R.id.ghost_details_next) ?: return null
         )
-        return Views(cover, bg, dim, details, title, artist, coverFrame, textLayout, gPrev, gNext)
+        return Views(
+            cover, bg, dim, f<View>(R.id.bg_bottom_fade), f<View>(R.id.slider),
+            details, title, artist, coverFrame, textLayout, gPrev, gNext
+        )
     }
 
     fun attach() {
@@ -317,10 +309,18 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
                 x.layoutParams = lp
             }
         }
-        // cover goes flush to the very top (under the status bar)
+        // black fade hugs the very bottom (under the navigation bar) and both side edges
+        v.fade?.let { x ->
+            val lp = x.layoutParams as ConstraintLayout.LayoutParams
+            if (lp.leftMargin != l || lp.topMargin != 0 || lp.rightMargin != r || lp.bottomMargin != b) {
+                lp.setMargins(l, 0, r, b)
+                x.layoutParams = lp
+            }
+        }
+        // cover sits BELOW the status bar now (the padding of the sheet already leaves that room)
         val clp = v.coverFrame.layoutParams as ConstraintLayout.LayoutParams
-        if (clp.topMargin != t) {
-            clp.topMargin = t
+        if (clp.topMargin != 0) {
+            clp.topMargin = 0
             v.coverFrame.layoutParams = clp
         }
     }
@@ -393,10 +393,17 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
 
     // ---------------------------------------------------------------- ghosts (neighbour pages)
 
-    private fun refreshGhosts() {
+    private fun refreshGhosts(force: Boolean = false) {
         val v = views ?: return
-        if (commitPending || dragging) return
         val p = activity.getPlayer() ?: return
+        val waiting = syncWait
+        if (!force && waiting == null && (committing || dragging)) return
+        if (committing) return
+        if (waiting != null) {
+            // the player has not reported the song we just swiped to yet; keep what we know
+            if (p.currentMediaItem?.mediaId != waiting) return
+            syncWait = null
+        }
         if (p.mediaItemCount == 0) return
         val cur = p.currentMediaItem
         val ni = p.nextMediaItemIndex
@@ -435,13 +442,21 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
 
     // ---------------------------------------------------------------- touch handling
 
+    /** Everything from the top of the cover down to the bottom, except the seek bar. */
     private fun inRegion(x: Float, y: Float): Boolean {
         val v = views ?: return false
         val cr = Rect(0, 0, v.coverFrame.width, v.coverFrame.height)
         sheet.offsetDescendantRectToMyCoords(v.coverFrame, cr)
-        val tr = Rect(0, 0, v.textLayout.width, v.textLayout.height)
-        sheet.offsetDescendantRectToMyCoords(v.textLayout, tr)
-        return y >= cr.top && y <= tr.bottom
+        if (y < cr.top) return false
+        v.slider?.let { s ->
+            if (s.width > 0 && s.visibility == View.VISIBLE) {
+                val sr = Rect(0, 0, s.width, s.height)
+                sheet.offsetDescendantRectToMyCoords(s, sr)
+                val pad = (8 * density).toInt()
+                if (y >= sr.top - pad && y <= sr.bottom + pad) return false
+            }
+        }
+        return true
     }
 
     /** Returns true when the swipe gesture owns this touch stream. */
@@ -449,16 +464,31 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         if (views == null) return false
         when (ev.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                settle?.end()
+                // this same DOWN reaches us twice (intercept + touch): handle it once
+                if (ev.downTime == lastDownTime && ev.eventTime == lastDownEvent) return false
+                lastDownTime = ev.downTime
+                lastDownEvent = ev.eventTime
                 velocity?.recycle()
                 velocity = null
                 dragging = false
-                isTracking = !commitPending && activity.getPlayer() != null &&
-                        inRegion(ev.x, ev.y)
+                grabbed = false
+                dragBase = 0f
+                isTracking = activity.getPlayer() != null && inRegion(ev.x, ev.y)
                 startX = ev.x
                 startY = ev.y
                 if (isTracking) {
+                    // never locked: catch the page right where it is, even mid-animation
+                    if (committing) {
+                        grabCommit()
+                    } else if (settle != null) {
+                        settle?.cancel()
+                        settle = null
+                        dragBase = currentC
+                        grabbed = true
+                    }
                     velocity = VelocityTracker.obtain().also { it.addMovement(ev) }
+                } else if (!committing) {
+                    settle?.end()
                 }
                 return false
             }
@@ -478,32 +508,38 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
                         isTracking = false
                     }
                 }
-                if (dragging) applyDrag(dx)
+                if (dragging) applyDrag(dragBase + dx)
                 return dragging
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 val was = dragging
+                val wasGrabbed = grabbed
+                val canceled = ev.actionMasked == MotionEvent.ACTION_CANCEL
                 if (was) {
                     velocity?.addMovement(ev)
                     velocity?.computeCurrentVelocity(1000)
                     val vx = velocity?.xVelocity ?: 0f
-                    endDrag(ev.x - startX, vx, ev.actionMasked == MotionEvent.ACTION_CANCEL)
+                    endDrag(dragBase + (ev.x - startX), vx, canceled)
+                } else if (wasGrabbed) {
+                    // just caught it and let go: glide into place, keep the new song
+                    endDrag(dragBase, 0f, true)
                 }
                 dragging = false
+                grabbed = false
                 isTracking = false
                 velocity?.recycle()
                 velocity = null
-                return was
+                return was || wasGrabbed
             }
         }
         return dragging
     }
 
-    private fun applyDrag(dx: Float) {
+    private fun applyDrag(total: Float) {
         val w = sheet.width.toFloat().coerceAtLeast(1f)
-        val canGo = if (dx > 0) prevItem != null else nextItem != null
-        val c = (if (canGo) dx else dx * 0.25f).coerceIn(-w, w)
+        val canGo = if (total > 0) prevItem != null else nextItem != null
+        val c = (if (canGo) total else total * 0.25f).coerceIn(-w, w)
         translate(c)
     }
 
@@ -512,15 +548,20 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         currentC = c
         val w = sheet.width.toFloat().coerceAtLeast(1f)
         val p = (abs(c) / w).coerceIn(0f, 1f)
+        val showPrev = c > 0f && prevItem != null
+        val showNext = c < 0f && nextItem != null
+        // outgoing fades out while the incoming fades in (only when there is an incoming page)
+        val pa = if (showPrev || showNext) p else 0f
         val ov = 3f * (1f - p) // tiny overlap so no seam/bar shows between the two covers
         v.coverFrame.translationX = c
+        v.coverFrame.alpha = 1f - pa
         v.textLayout.translationX = c
-        v.textLayout.alpha = 1f - p
-        setGhost(v.gPrev, c > 0f && prevItem != null, c - w + ov, p)
-        setGhost(v.gNext, c < 0f && nextItem != null, c + w - ov, p)
+        v.textLayout.alpha = 1f - pa
+        setGhost(v.gPrev, showPrev, c - w + ov, pa)
+        setGhost(v.gNext, showNext, c + w - ov, pa)
     }
 
-    private fun setGhost(g: Ghost, show: Boolean, tx: Float, textAlpha: Float) {
+    private fun setGhost(g: Ghost, show: Boolean, tx: Float, alpha: Float) {
         val vis = if (show) View.VISIBLE else View.INVISIBLE
         if (g.cover.visibility != vis) {
             g.cover.visibility = vis
@@ -528,7 +569,8 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         }
         g.cover.translationX = tx
         g.text.translationX = tx
-        g.text.alpha = textAlpha
+        g.cover.alpha = alpha
+        g.text.alpha = alpha
     }
 
     private fun setLayers(on: Boolean) {
@@ -540,23 +582,22 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         }
     }
 
-    private fun endDrag(dx: Float, vx: Float, canceled: Boolean) {
+    private fun endDrag(total: Float, vx: Float, canceled: Boolean) {
         val w = sheet.width.toFloat().coerceAtLeast(1f)
-        val dir = if (dx > 0) 1 else -1
+        val dir = if (total > 0) 1 else -1
         val target = if (dir > 0) prevItem else nextItem
         val flingMin = 800f * density
-        val flingOk = abs(vx) > flingMin && (vx > 0) == (dir > 0) && abs(dx) > slop * 2
+        val flingOk = abs(vx) > flingMin && (vx > 0) == (dir > 0) &&
+                abs(total - dragBase) > slop * 2
         val p = activity.getPlayer()
         val commit = !canceled && p != null && target != null &&
-                (abs(dx) > w * 0.3f || flingOk)
+                (abs(total) > w * 0.3f || flingOk)
         if (commit && p != null) {
-            commitPending = true
-            animDone = false
-            awaitingId = target?.mediaId
-            awaitingItem = target
-            beforeUri = p.currentMediaItem?.mediaMetadata?.artworkUri
-            beforeDrawable = views?.cover?.drawable
-            transitionSeen = target?.mediaId == p.currentMediaItem?.mediaId
+            committing = true
+            commitDir = dir
+            commitTarget = target
+            commitOld = p.currentMediaItem
+            commitOldDrawable = views?.cover?.drawable
             if (dir > 0) {
                 val wasRestart = restart
                 p.seekToPrevious()
@@ -565,26 +606,39 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
                 p.seekToNext()
             }
         }
-        animateTo(if (commit) dir * w else 0f, commit, vx)
+        animateTo(if (commit) dir * w else 0f, commit)
     }
 
-    private fun animateTo(target: Float, commit: Boolean, vx: Float) {
-        val dist = abs(target - currentC)
-        val speed = maxOf(abs(vx), 1800f * density)
-        val dur = (dist / speed * 1000f).toLong().coerceIn(if (commit) 170L else 150L, 320L)
+    /** Fast start, long slow brake. */
+    private fun animateTo(target: Float, commit: Boolean) {
+        val w = sheet.width.toFloat().coerceAtLeast(1f)
+        val frac = (abs(target - currentC) / w).coerceIn(0f, 1f)
+        settle?.cancel()
         val a = ValueAnimator.ofFloat(currentC, target)
-        a.duration = dur
-        a.interpolator = DecelerateInterpolator(1.5f)
+        if (commit) {
+            a.duration = (240f + 200f * frac).toLong()
+            a.interpolator = DecelerateInterpolator(2.2f)
+        } else {
+            a.duration = (140f + 140f * frac).toLong()
+            a.interpolator = DecelerateInterpolator(1.5f)
+        }
         a.addUpdateListener { translate(it.animatedValue as Float) }
         a.addListener(object : AnimatorListenerAdapter() {
+            private var canceled = false
+
+            override fun onAnimationCancel(animation: Animator) {
+                canceled = true
+            }
+
             override fun onAnimationEnd(animation: Animator) {
-                settle = null
+                if (settle === animation) settle = null
+                if (canceled) return
                 if (commit) {
-                    animDone = true
-                    tryReveal()
+                    finishCommit()
                 } else {
                     translate(0f)
                     setLayers(false)
+                    refreshGhosts()
                 }
             }
         })
@@ -592,45 +646,89 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         a.start()
     }
 
-    private fun tryReveal() {
-        if (!commitPending || !animDone) return
-        handler.removeCallbacks(pollRunnable)
-        deadline = SystemClock.uptimeMillis() + 900L
-        handler.post(pollRunnable)
-    }
+    // ---------------------------------------------------------------- finishing a song change
 
-    private fun realMatchesTarget(): Boolean {
-        val v = views ?: return true
-        val md = awaitingItem?.mediaMetadata ?: return true
-        val titleOk = v.title.text?.toString() == (md.title?.toString() ?: "")
-        val artOk = md.artworkUri == beforeUri || v.cover.drawable !== beforeDrawable
-        return titleOk && artOk
-    }
-
-    /** Real views slide back in underneath, the ghost fades out on top: no pop. */
-    private fun startReveal() {
+    /** Real views take over the incoming song's look, so swapping back is invisible. */
+    private fun adoptTarget(incoming: Ghost) {
         val v = views ?: return
-        handler.removeCallbacks(pollRunnable)
-        v.coverFrame.translationX = 0f
-        v.textLayout.translationX = 0f
-        v.textLayout.alpha = 1f
-        val g = if (currentC > 0f) v.gPrev else v.gNext
-        g.cover.animate().alpha(0f).setDuration(180L).start()
-        g.text.animate().alpha(0f).setDuration(180L).withEndAction { finishReveal() }.start()
+        val md = commitTarget?.mediaMetadata ?: return
+        forceText(v.title, md.title ?: "")
+        forceText(v.artist, md.artist ?: sheet.context.getString(R.string.unknown_artist))
+        updateDetails(md)
+        incoming.cover.drawable?.let { d ->
+            v.cover.setImageDrawable(d.constantState?.newDrawable(sheet.resources) ?: d)
+        }
     }
 
-    private fun finishReveal() {
+    private fun forceText(tv: TextView, text: CharSequence) {
+        (tv.getTag(R.id.fade_out_animation) as? android.view.ViewPropertyAnimator)?.cancel()
+        (tv.getTag(R.id.fade_in_animation) as? android.view.ViewPropertyAnimator)?.cancel()
+        tv.animate().cancel()
+        tv.setTag(androidx.core.R.id.text, null)
+        tv.text = text
+        tv.alpha = 1f
+        tv.visibility = View.VISIBLE
+    }
+
+    private fun finishCommit() {
         val v = views ?: return
-        commitPending = false
-        animDone = false
-        transitionSeen = false
-        awaitingId = null
-        awaitingItem = null
-        v.gPrev.cover.alpha = 1f
-        v.gNext.cover.alpha = 1f
+        val incoming = if (commitDir > 0) v.gPrev else v.gNext
+        adoptTarget(incoming)
+        committing = false
+        commitTarget = null
+        commitOld = null
+        commitOldDrawable = null
         translate(0f)
         setLayers(false)
         refreshGhosts()
+    }
+
+    /** The user touched the page while it was still gliding in: carry on from exactly there. */
+    private fun grabCommit() {
+        val v = views ?: return
+        val w = sheet.width.toFloat().coerceAtLeast(1f)
+        val dir = commitDir
+        val target = commitTarget
+        val old = commitOld
+        val oldDrawable = commitOldDrawable
+        settle?.cancel()
+        settle = null
+        val incoming = if (dir > 0) v.gPrev else v.gNext
+        // where the incoming page is right now becomes the new "current" offset
+        val r = if (dir > 0) currentC - w else currentC + w
+        adoptTarget(incoming)
+        committing = false
+        commitTarget = null
+        commitOld = null
+        commitOldDrawable = null
+        // the song we just left becomes the neighbour on the opposite side
+        val oldGhost = if (dir > 0) v.gNext else v.gPrev
+        if (old != null) {
+            bindGhost(oldGhost, old)
+            if (oldDrawable != null) {
+                oldGhost.cover.setImageDrawable(
+                    oldDrawable.constantState?.newDrawable(sheet.resources) ?: oldDrawable
+                )
+                oldGhost.key = old.mediaMetadata.artworkUri
+            }
+            if (dir > 0) {
+                nextItem = old
+                prevItem = null
+            } else {
+                prevItem = old
+                nextItem = null
+            }
+        }
+        val p = activity.getPlayer()
+        if (target != null && p != null && p.currentMediaItem?.mediaId == target.mediaId) {
+            syncWait = null
+            refreshGhosts(force = true)
+        } else {
+            syncWait = target?.mediaId
+        }
+        translate(r)
+        dragBase = r
+        grabbed = true
     }
 
     private fun tick() {

@@ -66,6 +66,7 @@ class PreviewBottomSheet(
     private var downX = 0f
     private var downY = 0f
     private var swiping = false
+    private var downTime = 0L
 
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
             this(context, attrs, defStyleAttr, 0)
@@ -87,6 +88,15 @@ class PreviewBottomSheet(
             ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.CONTEXT_CLICK)
             instance?.playOrPause()
         }
+        // long press: stop playback and empty the queue, so the idle shuffle circle comes back
+        bottomSheetPreviewControllerButton.setOnLongClickListener {
+            ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.LONG_PRESS)
+            instance?.let { c ->
+                c.stop()
+                c.clearMediaItems()
+            }
+            true
+        }
 
         activity.controllerViewModel.addRecreationalPlayerListener(activity.lifecycle, this) {
             onPlaybackStateChanged(instance?.playbackState ?: Player.STATE_IDLE)
@@ -102,6 +112,7 @@ class PreviewBottomSheet(
             MotionEvent.ACTION_DOWN -> {
                 downX = event.x
                 downY = event.y
+                downTime = event.eventTime
                 swiping = false
             }
 
@@ -125,6 +136,12 @@ class PreviewBottomSheet(
             }
 
             MotionEvent.ACTION_UP -> {
+                if (!swiping && abs(event.x - downX) < slop && abs(event.y - downY) < slop &&
+                    event.eventTime - downTime < ViewConfiguration.getLongPressTimeout()
+                ) {
+                    // a clean tap anywhere on the bar (sides, text, empty space) expands the player
+                    (parent as? PlayerBottomSheet)?.open()
+                }
                 if (swiping) {
                     val dx = event.x - downX
                     swiping = false

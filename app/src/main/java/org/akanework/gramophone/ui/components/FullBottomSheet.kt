@@ -508,6 +508,15 @@ class FullBottomSheet
             ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.CONTEXT_CLICK)
             instance?.playOrPause()
         }
+        // long press: stop playback and empty the queue, so the idle shuffle circle comes back
+        bottomSheetFullControllerButton.setOnLongClickListener {
+            ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.LONG_PRESS)
+            instance?.let { c ->
+                c.stop()
+                c.clearMediaItems()
+            }
+            true
+        }
         bottomSheetFullPreviousButton.setOnClickListener {
             ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.CONTEXT_CLICK)
             instance?.seekToPrevious()
