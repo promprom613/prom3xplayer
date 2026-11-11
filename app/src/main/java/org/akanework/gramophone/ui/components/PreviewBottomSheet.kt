@@ -88,6 +88,18 @@ class PreviewBottomSheet(
             ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.CONTEXT_CLICK)
             instance?.playOrPause()
         }
+        // floating card look: round the blurred art, dim and side fades
+        val cardR = 28 * density
+        val roundOutline = object : android.view.ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: android.graphics.Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, cardR)
+            }
+        }
+        for (id in intArrayOf(
+            R.id.preview_bg, R.id.preview_dim, R.id.preview_fade_left, R.id.preview_fade_right
+        )) {
+            findViewById<View>(id)?.let { it.outlineProvider = roundOutline; it.clipToOutline = true }
+        }
         // long press: stop playback and empty the queue, so the idle shuffle circle comes back
         bottomSheetPreviewControllerButton.setOnLongClickListener {
             ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.LONG_PRESS)
@@ -140,6 +152,12 @@ class PreviewBottomSheet(
                     event.eventTime - downTime < ViewConfiguration.getLongPressTimeout()
                 ) {
                     // a clean tap anywhere on the bar (sides, text, empty space) expands the player
+                    (parent as? PlayerBottomSheet)?.open()
+                }
+                if (!swiping && downY - event.y > 20 * density &&
+                    downY - event.y > abs(event.x - downX) * 1.2f
+                ) {
+                    // swipe up from anywhere on the card, even if the sheet drag did not engage
                     (parent as? PlayerBottomSheet)?.open()
                 }
                 if (swiping) {

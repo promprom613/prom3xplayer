@@ -137,6 +137,11 @@ class PlayerBottomSheet private constructor(
             newState: Int,
         ) {
             when (newState) {
+                BottomSheetBehavior.STATE_COLLAPSED, BottomSheetBehavior.STATE_HIDDEN ->
+                    setSheetBgAlpha(0f)
+                BottomSheetBehavior.STATE_EXPANDED -> setSheetBgAlpha(1f)
+            }
+            when (newState) {
                 BottomSheetBehavior.STATE_COLLAPSED -> {
                     fullPlayer.visibilityDueToBottomSheet = GONE
                     previewPlayer.visibility = VISIBLE
@@ -197,6 +202,7 @@ class PlayerBottomSheet private constructor(
         ) {
             if (slideOffset < 0) {
                 // hidden state
+                setSheetBgAlpha(0f)
                 previewPlayer.alpha = 1 - (-1 * slideOffset)
                 fullPlayer.alpha = 0f
                 lyricsFrame.alpha = 0f
@@ -205,6 +211,7 @@ class PlayerBottomSheet private constructor(
             previewPlayer.alpha = 1 - (slideOffset)
             fullPlayer.alpha = slideOffset
             lyricsFrame.alpha = slideOffset
+            setSheetBgAlpha(slideOffset)
         }
     }
 
@@ -304,6 +311,16 @@ class PlayerBottomSheet private constructor(
         onStop(lifecycleOwner)
     }
 
+    /** Collapsed = floating card on transparent sheet; the sheet fills in while expanding. */
+    private fun setSheetBgAlpha(offset: Float) {
+        val a = (offset.coerceIn(0f, 1f) * 255).toInt()
+        val bg = background ?: return
+        if (bg.alpha != a) {
+            bg.alpha = a
+            invalidateOutline()
+        }
+    }
+
     private fun updatePeekHeight() {
         previewPlayer.measure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
@@ -342,7 +359,11 @@ class PlayerBottomSheet private constructor(
         // fullPlayer should extend into system bars AND display cutout. previewPlayer can't use
         // fitsSystemWindows because it doesn't want top padding from status bar.
         // We have to do it manually, duh.
-        previewPlayer.setPadding(myInsets.left, 0, myInsets.right, myInsets.bottom)
+        val cardSide = (12 * resources.displayMetrics.density).toInt()
+        val cardGap = (10 * resources.displayMetrics.density).toInt()
+        previewPlayer.setPadding(
+            myInsets.left + cardSide, 0, myInsets.right + cardSide, myInsets.bottom + cardGap
+        )
         // Let fullPlayer handle insets itself (and discard result as it's irrelevant to hierarchy)
         ViewCompat.dispatchApplyWindowInsets(fullPlayer, insets.clone())
         // Same for lyrics view

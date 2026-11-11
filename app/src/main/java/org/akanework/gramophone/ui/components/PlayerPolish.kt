@@ -2,6 +2,7 @@ package org.akanework.gramophone.ui.components
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.animation.TimeInterpolator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Bitmap
@@ -611,21 +612,28 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
                 p.seekToNext()
             }
         }
-        animateTo(if (commit) dir * w else 0f, commit)
+        animateTo(if (commit) dir * w else 0f, commit, vx)
     }
 
-    /** Fast start, long slow brake. */
-    private fun animateTo(target: Float, commit: Boolean) {
+    /**
+     * Glide: starts at the speed the finger had on release (no snap), then brakes for a long time.
+     */
+    private fun animateTo(target: Float, commit: Boolean, vx: Float = 0f) {
         val w = sheet.width.toFloat().coerceAtLeast(1f)
-        val frac = (abs(target - currentC) / w).coerceIn(0f, 1f)
+        val dist = abs(target - currentC)
+        val frac = (dist / w).coerceIn(0f, 1f)
         settle?.cancel()
         val a = ValueAnimator.ofFloat(currentC, target)
-        if (commit) {
-            a.duration = (620f + 420f * frac).toLong()
-            a.interpolator = android.view.animation.PathInterpolator(0.2f, 0.75f, 0.12f, 1f)
-        } else {
-            a.duration = (140f + 140f * frac).toLong()
-            a.interpolator = DecelerateInterpolator(1.5f)
+        val durMs = if (commit) 1150f + 450f * frac else 380f + 260f * frac
+        a.duration = durMs.toLong()
+        val toward = if (target >= currentC) vx else -vx
+        val m0 = if (dist < 1f) 1f else
+            (maxOf(toward, 0f) * (durMs / 1000f) / dist).coerceIn(0.8f, 2.5f)
+        val n = 3.6f
+        val k = n - m0
+        a.interpolator = TimeInterpolator { t ->
+            val u = 1f - t
+            1f - Math.pow(u.toDouble(), n.toDouble()).toFloat() * (1f + k * t)
         }
         a.addUpdateListener { translate(it.animatedValue as Float) }
         a.addListener(object : AnimatorListenerAdapter() {
