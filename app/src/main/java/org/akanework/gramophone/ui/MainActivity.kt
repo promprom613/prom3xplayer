@@ -888,13 +888,18 @@ class MainActivity : BaseActivity() {
             hide()
             return
         }
+        img.setBackgroundColor(
+            com.google.android.material.color.MaterialColors.getColor(img, android.R.attr.colorBackground)
+        )
+        img.visibility = android.view.View.VISIBLE
         val dm = resources.displayMetrics
         bgJob = lifecycleScope.launch {
             val bmp = withContext(Dispatchers.IO) {
                 decodeBackground(Uri.parse(uriStr), dm.widthPixels, dm.heightPixels)
             }
             if (bmp == null) {
-                hide()
+                top?.visibility = android.view.View.GONE
+                bot?.visibility = android.view.View.GONE
             } else {
                 img.setImageBitmap(bmp)
                 img.visibility = android.view.View.VISIBLE

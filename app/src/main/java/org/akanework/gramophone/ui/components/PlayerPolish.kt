@@ -648,6 +648,19 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         val inA = Math.pow(pa.toDouble(), 1.7).toFloat()
         v.scrim?.alpha = minOf(1f, pa * 6f)
         v.lyricBox?.alpha = 1f - pa
+        if (committing) {
+            // the real views are already being updated to the new song: hide them and slide a
+            // frozen copy of the old song out instead, so it can never turn into the next picture
+            val inG = if (commitDir > 0) v.gPrev else v.gNext
+            val clone = if (commitDir > 0) v.gNext else v.gPrev
+            v.coverFrame.translationX = c
+            v.textLayout.translationX = c
+            v.coverFrame.alpha = 0f
+            v.textLayout.alpha = 0f
+            setGhost(inG, true, if (commitDir > 0) c - w + ov else c + w - ov, inA, pa)
+            setGhost(clone, true, c, outA, 1f - pa)
+            return
+        }
         v.coverFrame.translationX = c
         v.coverFrame.alpha = outA
         v.textLayout.translationX = c
@@ -693,6 +706,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
             commitTarget = target
             commitOld = p.currentMediaItem
             commitOldDrawable = views?.cover?.drawable
+            prepareClone(dir)
             if (dir > 0) {
                 val wasRestart = restart
                 p.seekToPrevious()
@@ -778,6 +792,17 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         tv.text = text
         tv.alpha = 1f
         tv.visibility = View.VISIBLE
+    }
+
+    private fun prepareClone(dir: Int) {
+        val v = views ?: return
+        val old = commitOld ?: return
+        val clone = if (dir > 0) v.gNext else v.gPrev
+        bindGhost(clone, old)
+        commitOldDrawable?.let { d ->
+            clone.cover.setImageDrawable(d.constantState?.newDrawable(sheet.resources) ?: d)
+            clone.key = old.mediaMetadata.artworkUri
+        }
     }
 
     private fun finishCommit() {

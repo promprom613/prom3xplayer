@@ -54,6 +54,9 @@ import org.akanework.gramophone.ui.adapters.Sorter
  * @author nift4
  */
 class AdapterFragment : BaseFragment(null) {
+    override val allowImageBackground: Boolean
+        get() = true
+
     companion object {
         private const val TAG = "AdapterFragment"
     }

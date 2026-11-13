@@ -116,7 +116,7 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
             false
         }
         v.setBackgroundColor(
-            if (hasBgImage) 0xCC000000.toInt()
+            if (hasBgImage) 0xFF000000.toInt()
             else MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
         )
         v.layoutParams = FrameLayout.LayoutParams(
@@ -167,7 +167,6 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         val rv = recyclerView
         stickyScroll?.let { rv?.removeOnScrollListener(it) }
         stickyLayout?.let { rv?.removeOnLayoutChangeListener(it) }
-        stickyView?.let { stickyFrame?.removeView(it) }
         stickyScroll = null
         stickyLayout = null
         stickyView = null
@@ -438,7 +437,6 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     }
 
     override fun onDetachedFromRecyclerView(recyclerView: MyRecyclerView) {
-        removeSticky()
         super.onDetachedFromRecyclerView(recyclerView)
         this.recyclerView = null
     }

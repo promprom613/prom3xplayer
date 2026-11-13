@@ -52,8 +52,30 @@ abstract class BaseFragment(val wantsPlayer: Boolean? = null) : Fragment() {
     // https://github.com/material-components/material-components-android/issues/1984#issuecomment-1089710991
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // Overlap colors.
-        view.setBackgroundColor(MaterialColors.getColor(view, android.R.attr.colorBackground))
+        applyFragmentBackground(view)
+    }
+
+    /** The library screens let the main background image through; every other screen stays solid. */
+    protected open val allowImageBackground: Boolean
+        get() = false
+
+    private fun applyFragmentBackground(view: View?) {
+        if (view == null) return
+        val image = allowImageBackground && try {
+            androidx.preference.PreferenceManager.getDefaultSharedPreferences(view.context)
+                .getString("main_bg_uri", null) != null
+        } catch (_: Throwable) {
+            false
+        }
+        view.setBackgroundColor(
+            if (image) android.graphics.Color.TRANSPARENT
+            else MaterialColors.getColor(view, android.R.attr.colorBackground)
+        )
+    }
+
+    override fun onStart() {
+        super.onStart()
+        applyFragmentBackground(view)
     }
 
     override fun onHiddenChanged(hidden: Boolean) {

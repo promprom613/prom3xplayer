@@ -68,6 +68,9 @@ import org.nift4.mediastorecompat.MediaStoreCompat
  * @author AkaneTan
  */
 class ViewPagerFragment : BaseFragment(true) {
+    override val allowImageBackground: Boolean
+        get() = true
+
     lateinit var appBarLayout: AppBarLayout
         private set
     val recycledViewPool = RecyclerView.RecycledViewPool()
