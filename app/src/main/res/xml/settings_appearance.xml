@@ -41,6 +41,19 @@
             android:widgetLayout="@layout/preference_switch_widget"
             app:iconSpaceReserved="false" />
 
+        <Preference
+            android:key="main_bg_pick"
+            android:layout="@layout/preference_basic"
+            android:summary="@string/p3x_main_bg_summary"
+            android:title="@string/p3x_main_bg_title"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="main_bg_clear"
+            android:layout="@layout/preference_basic"
+            android:title="@string/p3x_main_bg_clear"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

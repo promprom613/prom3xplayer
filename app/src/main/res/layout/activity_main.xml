@@ -9,6 +9,32 @@
     tools:context=".ui.MainActivity">
     <!-- TODO do we even need animateLayoutChanges here? for what? -->
 
+    <ImageView
+        android:id="@+id/main_bg_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/main_bg_fade_top"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_gravity="top"
+        android:background="@drawable/main_fade_top"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/main_bg_fade_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="320dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/main_fade_bottom"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/container"
         android:name="org.akanework.gramophone.ui.fragments.ViewPagerFragment"

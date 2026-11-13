@@ -97,11 +97,27 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     }
 
     private fun createSticky(rv: RecyclerView) {
+        try {
+            createStickyUnsafe(rv)
+        } catch (_: Throwable) {
+            removeSticky()
+        }
+    }
+
+    private fun createStickyUnsafe(rv: RecyclerView) {
         val frame = rv.parent as? FrameLayout ?: return
         if (frame.tag != STICKY_TAG) return
-        val v = adapter.layoutInflater.inflate(R.layout.general_decor, frame, false)
+        val v = android.view.LayoutInflater.from(rv.context)
+            .inflate(R.layout.general_decor, frame, false)
+        val hasBgImage = try {
+            androidx.preference.PreferenceManager.getDefaultSharedPreferences(rv.context)
+                .getString("main_bg_uri", null) != null
+        } catch (_: Throwable) {
+            false
+        }
         v.setBackgroundColor(
-            MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
+            if (hasBgImage) 0xCC000000.toInt()
+            else MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
         )
         v.layoutParams = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, dpHeight, Gravity.TOP

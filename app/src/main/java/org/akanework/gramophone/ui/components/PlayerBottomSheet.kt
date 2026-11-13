@@ -126,8 +126,9 @@ class PlayerBottomSheet private constructor(
     }
 
     fun open() {
-        if (standardBottomSheetBehavior!!.state == BottomSheetBehavior.STATE_COLLAPSED) {
-            standardBottomSheetBehavior!!.state = BottomSheetBehavior.STATE_EXPANDED
+        val b = standardBottomSheetBehavior ?: return
+        if (b.state == BottomSheetBehavior.STATE_COLLAPSED) {
+            b.state = BottomSheetBehavior.STATE_EXPANDED
         }
     }
 

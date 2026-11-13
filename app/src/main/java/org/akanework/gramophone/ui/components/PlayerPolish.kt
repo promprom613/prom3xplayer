@@ -43,6 +43,7 @@ import coil3.request.error
 import coil3.size.Scale
 import com.google.android.material.card.MaterialCardView
 import org.akanework.gramophone.R
+import org.akanework.gramophone.logic.utils.SemanticLyrics
 import org.akanework.gramophone.logic.Haptics
 import org.akanework.gramophone.ui.MainActivity
 import kotlin.math.abs
@@ -160,6 +161,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         val dim: View,
         val fade: View?,
         val scrim: View?,
+        val lyricBox: View?,
         val slider: View?,
         val details: TextView,
         val title: TextView,
@@ -171,6 +173,19 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     )
 
     private val views: Views? = build()
+    private val lyricView: TextView? = sheet.findViewById(R.id.p3x_lyric_line)
+    private val lyricHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var lyrics: SemanticLyrics? = null
+    private var lyricsFor: String? = null
+    private var lyricState = 0 // 0 loading, 1 none, 2 synced, 3 unsynced
+    private var lyricIdx = -2
+    private var shownLine: String? = null
+    private val noLyricsRunnable = Runnable {
+        if (lyricState == 0) {
+            lyricState = 1
+            showLine(sheet.context.getString(R.string.p3x_no_lyrics))
+        }
+    }
     private val slop = ViewConfiguration.get(sheet.context).scaledTouchSlop
     private val density = sheet.context.resources.displayMetrics.density
 
@@ -219,6 +234,16 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             loadBackground(mediaItem)
             refreshGhosts()
+            val id = mediaItem?.mediaId
+            if (id != lyricsFor) {
+                lyrics = null
+                lyricsFor = null
+                lyricState = 0
+                lyricIdx = -2
+                showLine("")
+                lyricHandler.removeCallbacks(noLyricsRunnable)
+                if (id != null) lyricHandler.postDelayed(noLyricsRunnable, 1500)
+            }
         }
 
         override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
@@ -265,7 +290,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
             f<TextView>(R.id.ghost_details_next) ?: return null
         )
         return Views(
-            cover, bg, dim, f<View>(R.id.bg_bottom_fade), f<View>(R.id.swipe_scrim), f<View>(R.id.slider),
+            cover, bg, dim, f<View>(R.id.bg_bottom_fade), f<View>(R.id.swipe_scrim), f<View>(R.id.p3x_lyric_box), f<View>(R.id.slider),
             details, title, artist, coverFrame, textLayout, gPrev, gNext
         )
     }
@@ -434,12 +459,75 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         g.details.setTextColor(v.details.currentTextColor)
         val uri = md.artworkUri
         if (g.key != uri || g.cover.drawable == null) {
+            // never show the previous song's picture while the new one loads
+            if (g.key != uri) g.cover.setImageDrawable(null)
             g.key = uri
             g.cover.loadNoPlaceholder(uri) {
                 scale(Scale.FILL)
                 error(R.drawable.ic_default_cover)
             }
         }
+    }
+
+    // ---------------------------------------------------------------- lyric line
+
+    fun setLyrics(l: SemanticLyrics?) {
+        lyricHandler.removeCallbacks(noLyricsRunnable)
+        lyrics = l
+        lyricsFor = activity.getPlayer()?.currentMediaItem?.mediaId
+        lyricIdx = -2
+        val synced = l as? SemanticLyrics.SyncedLyrics
+        when {
+            l == null || l.unsyncedText.isEmpty() -> {
+                lyricState = 1
+                showLine(sheet.context.getString(R.string.p3x_no_lyrics))
+            }
+            synced != null && synced.text.isNotEmpty() -> {
+                lyricState = 2
+                updateLyricLine()
+            }
+            else -> {
+                lyricState = 3
+                showLine(sheet.context.getString(R.string.p3x_lyrics_unsynced))
+            }
+        }
+    }
+
+    fun updateLyricLine() {
+        if (lyricState != 2) return
+        val syn = lyrics as? SemanticLyrics.SyncedLyrics ?: return
+        val pos = (activity.getPlayer()?.currentPosition ?: return).coerceAtLeast(0L).toULong()
+        var idx = -1
+        for (i in syn.text.indices) {
+            val ln = syn.text[i]
+            if (ln.isTranslated || ln.start > pos) continue
+            if (idx < 0 || ln.start >= syn.text[idx].start) idx = i
+        }
+        if (idx == lyricIdx) return
+        lyricIdx = idx
+        showLine(if (idx < 0) "" else syn.text[idx].text.trim().ifEmpty { "\u266A" })
+    }
+
+    /** New line slides up and fades in while the old one slides up and fades out. */
+    private fun showLine(text: String) {
+        val tv = lyricView ?: return
+        if (text == shownLine) return
+        shownLine = text
+        views?.let { tv.setTextColor(it.details.currentTextColor) }
+        val dy = 10 * density
+        tv.animate().cancel()
+        if (tv.text.isNullOrEmpty() || tv.alpha < 0.05f) {
+            tv.text = text
+            tv.translationY = dy
+            tv.alpha = 0f
+            tv.animate().alpha(1f).translationY(0f).setDuration(260).start()
+            return
+        }
+        tv.animate().alpha(0f).translationY(-dy).setDuration(140).withEndAction {
+            tv.text = text
+            tv.translationY = dy
+            tv.animate().alpha(1f).translationY(0f).setDuration(240).start()
+        }.start()
     }
 
     // ---------------------------------------------------------------- touch handling
@@ -559,6 +647,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         val outA = Math.pow((1f - pa).toDouble(), 1.7).toFloat()
         val inA = Math.pow(pa.toDouble(), 1.7).toFloat()
         v.scrim?.alpha = minOf(1f, pa * 6f)
+        v.lyricBox?.alpha = 1f - pa
         v.coverFrame.translationX = c
         v.coverFrame.alpha = outA
         v.textLayout.translationX = c
@@ -668,8 +757,16 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         forceText(v.title, md.title ?: "")
         forceText(v.artist, md.artist ?: sheet.context.getString(R.string.unknown_artist))
         updateDetails(md)
-        incoming.cover.drawable?.let { d ->
+        val d = incoming.cover.drawable
+        if (d != null) {
             v.cover.setImageDrawable(d.constantState?.newDrawable(sheet.resources) ?: d)
+        } else {
+            // ghost art not ready: never leave the previous song's picture on screen
+            v.cover.setImageDrawable(null)
+            v.cover.loadNoPlaceholder(md.artworkUri) {
+                scale(Scale.FILL)
+                error(R.drawable.ic_default_cover)
+            }
         }
     }
 

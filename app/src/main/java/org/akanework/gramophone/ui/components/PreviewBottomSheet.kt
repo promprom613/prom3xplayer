@@ -88,18 +88,21 @@ class PreviewBottomSheet(
             ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.CONTEXT_CLICK)
             instance?.playOrPause()
         }
-        // floating card look: round the blurred art, dim and side fades
+        // floating card: ONE rounded clip around everything + solid black base
+        // (no per-view clipping = no double edge lines, no see-through)
         val cardR = 28 * density
-        val roundOutline = object : android.view.ViewOutlineProvider() {
+        setBackgroundColor(android.graphics.Color.BLACK)
+        outlineProvider = object : android.view.ViewOutlineProvider() {
             override fun getOutline(view: View, outline: android.graphics.Outline) {
-                outline.setRoundRect(0, 0, view.width, view.height, cardR)
+                val l = view.paddingLeft
+                val t = view.paddingTop
+                val r = view.width - view.paddingRight
+                val b = view.height - view.paddingBottom
+                if (r > l && b > t) outline.setRoundRect(l, t, r, b, cardR) else outline.setEmpty()
             }
         }
-        for (id in intArrayOf(
-            R.id.preview_bg, R.id.preview_dim, R.id.preview_fade_left, R.id.preview_fade_right
-        )) {
-            findViewById<View>(id)?.let { it.outlineProvider = roundOutline; it.clipToOutline = true }
-        }
+        clipToOutline = true
+        addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> invalidateOutline() }
         // long press: stop playback and empty the queue, so the idle shuffle circle comes back
         bottomSheetPreviewControllerButton.setOnLongClickListener {
             ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.LONG_PRESS)

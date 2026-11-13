@@ -29,6 +29,7 @@ import android.content.ContentUris
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -232,6 +233,7 @@ class MainActivity : BaseActivity() {
             })
         }
         playerBottomSheet = findViewById(R.id.player_layout)
+        setupMainBackground()
         findViewById<android.view.View>(R.id.idle_play).setOnClickListener {
             getPlayer()?.let { controller ->
                 controller.shuffleModeEnabled = true
@@ -853,7 +855,70 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    private var bgPrefs: android.content.SharedPreferences? = null
+    private var bgJob: kotlinx.coroutines.Job? = null
+    private val bgPrefListener =
+        android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "main_bg_uri") applyMainBackground()
+        }
+
+    private fun setupMainBackground() {
+        try {
+            val p = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this)
+            bgPrefs = p
+            p.registerOnSharedPreferenceChangeListener(bgPrefListener)
+            applyMainBackground()
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun applyMainBackground() {
+        val img = findViewById<android.widget.ImageView>(R.id.main_bg_image) ?: return
+        val top = findViewById<android.view.View>(R.id.main_bg_fade_top)
+        val bot = findViewById<android.view.View>(R.id.main_bg_fade_bottom)
+        val uriStr = bgPrefs?.getString("main_bg_uri", null)
+        bgJob?.cancel()
+        fun hide() {
+            img.setImageDrawable(null)
+            img.visibility = android.view.View.GONE
+            top?.visibility = android.view.View.GONE
+            bot?.visibility = android.view.View.GONE
+        }
+        if (uriStr.isNullOrEmpty()) {
+            hide()
+            return
+        }
+        val dm = resources.displayMetrics
+        bgJob = lifecycleScope.launch {
+            val bmp = withContext(Dispatchers.IO) {
+                decodeBackground(Uri.parse(uriStr), dm.widthPixels, dm.heightPixels)
+            }
+            if (bmp == null) {
+                hide()
+            } else {
+                img.setImageBitmap(bmp)
+                img.visibility = android.view.View.VISIBLE
+                top?.visibility = android.view.View.VISIBLE
+                bot?.visibility = android.view.View.VISIBLE
+            }
+        }
+    }
+
+    private fun decodeBackground(uri: Uri, w: Int, h: Int): android.graphics.Bitmap? = try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        var sample = 1
+        while (bounds.outWidth / (sample * 2) >= w && bounds.outHeight / (sample * 2) >= h) {
+            sample *= 2
+        }
+        val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+        contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+    } catch (_: Throwable) {
+        null
+    }
+
     override fun onDestroy() {
+        bgPrefs?.unregisterOnSharedPreferenceChangeListener(bgPrefListener)
         // https://github.com/androidx/media/issues/805
         if (needsMissingOnDestroyCallWorkarounds()
             && (getPlayer()?.playWhenReady != true || getPlayer()?.mediaItemCount == 0)

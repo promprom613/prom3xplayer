@@ -204,6 +204,7 @@ class FullBottomSheet
                     if (seekBar != null) {
                         instance?.seekTo((seekBar.progress.toLong()))
                         bottomSheetFullLyricView.updateLyricPositionFromPlaybackPos()
+                        polish?.updateLyricLine()
                     }
                 }
                 isUserTracking = false
@@ -220,6 +221,7 @@ class FullBottomSheet
                 if (mediaId != null) {
                     instance?.seekTo((slider.value.toLong()))
                     bottomSheetFullLyricView.updateLyricPositionFromPlaybackPos()
+                    polish?.updateLyricLine()
                 }
                 isUserTracking = false
             }
@@ -306,6 +308,7 @@ class FullBottomSheet
                 GramophonePlaybackService.SERVICE_GET_LYRICS -> {
                     val parsedLyrics = instance?.getLyrics()
                     bottomSheetFullLyricView.updateLyrics(parsedLyrics)
+                    polish?.setLyrics(parsedLyrics)
                 }
 
                 GramophonePlaybackService.SERVICE_GET_AUDIO_FORMAT -> {
@@ -1491,6 +1494,7 @@ class FullBottomSheet
                 bottomSheetFullPosition.text = position
             }
             bottomSheetFullLyricView.updateLyricPositionFromPlaybackPos()
+            polish?.updateLyricLine()
         }
     }
 
@@ -1621,6 +1625,7 @@ class FullBottomSheet
                 bottomSheetFullPosition.text = position
             }
             bottomSheetFullLyricView.updateLyricPositionFromPlaybackPos()
+            polish?.updateLyricLine()
             if (instance?.isPlaying == true && runnableRunning) {
                 handler.postDelayed(this, SLIDER_UPDATE_INTERVAL)
             } else {
