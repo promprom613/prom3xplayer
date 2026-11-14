@@ -277,6 +277,17 @@
                 android:resource="@xml/lyric_widget" />
         </receiver>
 
+        <receiver
+            android:name=".ui.P3xPlayerWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/p3x_player_widget" />
+        </receiver>
+
         <service android:name=".ui.LyricWidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
 

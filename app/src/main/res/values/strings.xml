@@ -1311,4 +1311,6 @@ supporting local search. This string is displayed in the search bar when using G
     <string name="p3x_main_bg_title">Main screen background</string>
     <string name="p3x_main_bg_summary">Pick an image for the library background (fades on top and bottom)</string>
     <string name="p3x_main_bg_clear">Remove background image</string>
+    <string name="p3x_widget_description">Big player: song picture, title, progress and controls</string>
+    <string name="p3x_widget_idle">Nothing playing</string>
 </resources>
