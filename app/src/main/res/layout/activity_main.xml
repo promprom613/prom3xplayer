@@ -20,7 +20,7 @@
     <View
         android:id="@+id/main_bg_fade_top"
         android:layout_width="match_parent"
-        android:layout_height="220dp"
+        android:layout_height="280dp"
         android:layout_gravity="top"
         android:background="@drawable/main_fade_top"
         android:importantForAccessibility="no"
@@ -29,7 +29,7 @@
     <View
         android:id="@+id/main_bg_fade_bottom"
         android:layout_width="match_parent"
-        android:layout_height="320dp"
+        android:layout_height="400dp"
         android:layout_gravity="bottom"
         android:background="@drawable/main_fade_bottom"
         android:importantForAccessibility="no"

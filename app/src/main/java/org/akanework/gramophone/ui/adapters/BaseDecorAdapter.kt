@@ -115,13 +115,19 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         } catch (_: Throwable) {
             false
         }
-        v.setBackgroundColor(
-            if (hasBgImage) 0xFF000000.toInt()
-            else MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
-        )
+        if (hasBgImage) {
+            v.background = android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(0xE6000000.toInt(), 0x00000000)
+            )
+        } else {
+            v.setBackgroundColor(
+                MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
+            )
+        }
         v.layoutParams = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, dpHeight, Gravity.TOP
-        )
+        ).also { it.rightMargin = (12 * rv.resources.displayMetrics.density).toInt() }
         v.setPadding(rv.paddingLeft, 0, rv.paddingRight, 0)
         v.translationY = rv.paddingTop.toFloat()
         v.visibility = View.INVISIBLE
@@ -148,17 +154,21 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         val rv = recyclerView ?: return
         val v = stickyView ?: return
         val first = rv.findViewHolderForAdapterPosition(0)
-        val show = when {
-            rv.childCount == 0 -> false
-            first == null -> true // scrolled far away from the top
-            first !is ViewHolder -> false
-            else -> first.itemView.top < rv.paddingTop
+        val density = rv.resources.displayMetrics.density
+        val scrolled = when {
+            rv.childCount == 0 -> 0f
+            first == null -> 1e6f // scrolled far away from the top
+            first !is ViewHolder -> 0f
+            else -> (rv.paddingTop - first.itemView.top).toFloat()
         }
-        val vis = if (show) View.VISIBLE else View.INVISIBLE
+        // fades in over the first few dp of scrolling instead of popping in
+        val a = (scrolled / (28f * density)).coerceIn(0f, 1f)
+        val vis = if (a > 0f) View.VISIBLE else View.INVISIBLE
         if (v.visibility != vis) {
-            if (show) stickyHolder?.let { bindDecor(it) }
+            if (a > 0f) stickyHolder?.let { bindDecor(it) }
             v.visibility = vis
         }
+        if (v.alpha != a) v.alpha = a
         val ty = rv.paddingTop.toFloat()
         if (v.translationY != ty) v.translationY = ty
     }

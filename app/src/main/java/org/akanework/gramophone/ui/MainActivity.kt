@@ -902,6 +902,7 @@ class MainActivity : BaseActivity() {
                 bot?.visibility = android.view.View.GONE
             } else {
                 img.setImageBitmap(bmp)
+                img.setColorFilter(Color.argb(51, 0, 0, 0)) // 20% dim
                 img.visibility = android.view.View.VISIBLE
                 top?.visibility = android.view.View.VISIBLE
                 bot?.visibility = android.view.View.VISIBLE

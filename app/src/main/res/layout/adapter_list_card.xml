@@ -36,6 +36,10 @@
 
     <TextView
         android:id="@+id/title"
+        android:shadowColor="#B3000000"
+        android:shadowDx="0"
+        android:shadowDy="2"
+        android:shadowRadius="6"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="18dp"
@@ -54,6 +58,10 @@
 
     <TextView
         android:id="@+id/artist"
+        android:shadowColor="#B3000000"
+        android:shadowDx="0"
+        android:shadowDy="2"
+        android:shadowRadius="6"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="18dp"
