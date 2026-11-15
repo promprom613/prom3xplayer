@@ -18,6 +18,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import android.util.LruCache
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
 import androidx.media3.common.C
@@ -41,13 +42,28 @@ import org.akanework.gramophone.logic.playOrPause
 class P3xPlayerWidget : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, awm: AppWidgetManager, appWidgetIds: IntArray) {
+        idsAt = 0L
         fullUpdate(context)
+    }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        idsAt = 0L
+    }
+
+    override fun onDisabled(context: Context) {
+        // last widget removed: free everything
+        idsAt = 0L
+        painted = false
+        main.removeCallbacksAndMessages(null)
+        pictures.evictAll()
+        sizeCache = null
     }
 
     override fun onAppWidgetOptionsChanged(
         context: Context, awm: AppWidgetManager, appWidgetId: Int, newOptions: Bundle?
     ) {
-        cacheKey = null // size changed: repaint the picture for the new shape
+        sizeCache = null // size changed: repaint the picture for the new shape
+        idsAt = 0L
         fullUpdate(context)
     }
 
@@ -82,7 +98,8 @@ class P3xPlayerWidget : AppWidgetProvider() {
         val playing: Boolean,
         val pos: Long,
         val dur: Long,
-        val art: Any?
+        val art: Any?,
+        val nextArt: Any? = null
     )
 
     companion object {
@@ -101,10 +118,17 @@ class P3xPlayerWidget : AppWidgetProvider() {
 
         private var lastId: String? = null
         private var painted = false
-        private var fadeSeq = 0
-        private var cacheKey: String? = null
-        private var cacheBmp: Bitmap? = null
+        private var page = 0 // which flipper page is on screen
+        private var loadSeq = 0
         private var lastPartial = 0L
+        private var lastSig: String? = null
+        private val pictures = LruCache<String, Bitmap>(3) // composed pictures, newest 3
+        private var sizeCache: Pair<Int, Int>? = null
+        private var idsCache: IntArray = IntArray(0)
+        private var idsAt = 0L
+        private val titleIds = intArrayOf(R.id.w_title0, R.id.w_title1)
+        private val artistIds = intArrayOf(R.id.w_artist0, R.id.w_artist1)
+        private val bgIds = intArrayOf(R.id.w_bg0, R.id.w_bg1)
 
         private val tick = object : Runnable {
             override fun run() {
@@ -138,12 +162,15 @@ class P3xPlayerWidget : AppWidgetProvider() {
                     if (firstPaint) fullUpdate(ctx) else transitionTo(ctx, s)
                 } else {
                     val now = android.os.SystemClock.elapsedRealtime()
-                    if (now - lastPartial > 250) {
+                    val prog = if (s.dur > 0) (s.pos * 1000L / s.dur).toInt() else 0
+                    val sig = "${s.playing}|${s.title}|${s.artist}|$prog"
+                    if (now - lastPartial > 250 && sig != lastSig) {
                         lastPartial = now
+                        lastSig = sig
                         partial(ctx) {
                             setProgress(this, s)
-                            setTextViewText(R.id.w_title, s.title)
-                            setTextViewText(R.id.w_artist, s.artist)
+                            setTextViewText(titleIds[page], s.title)
+                            setTextViewText(artistIds[page], s.artist)
                         }
                     }
                 }
@@ -166,7 +193,9 @@ class P3xPlayerWidget : AppWidgetProvider() {
                 p.isPlaying,
                 p.currentPosition.coerceAtLeast(0L),
                 d,
-                md.artworkUri
+                md.artworkUri,
+                p.nextMediaItemIndex.takeIf { it != C.INDEX_UNSET }
+                    ?.let { p.getMediaItemAt(it).mediaMetadata.artworkUri }
             )
         }
 
@@ -196,11 +225,17 @@ class P3xPlayerWidget : AppWidgetProvider() {
 
         // ------------------------------------------------------------------ painting
 
-        private fun ids(ctx: Context): IntArray = try {
-            AppWidgetManager.getInstance(ctx)
-                .getAppWidgetIds(ComponentName(ctx, P3xPlayerWidget::class.java))
-        } catch (_: Throwable) {
-            IntArray(0)
+        private fun ids(ctx: Context): IntArray {
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (now - idsAt < 5000) return idsCache
+            idsCache = try {
+                AppWidgetManager.getInstance(ctx)
+                    .getAppWidgetIds(ComponentName(ctx, P3xPlayerWidget::class.java))
+            } catch (_: Throwable) {
+                IntArray(0)
+            }
+            idsAt = now
+            return idsCache
         }
 
         private fun rv(ctx: Context) = RemoteViews(ctx.packageName, R.layout.p3x_player_widget)
@@ -222,12 +257,6 @@ class P3xPlayerWidget : AppWidgetProvider() {
             )
         }
 
-        private fun setAlpha(v: RemoteViews, a: Int) {
-            v.setInt(R.id.w_bg, "setImageAlpha", a)
-            v.setTextColor(R.id.w_title, Color.argb(a, 255, 255, 255))
-            v.setTextColor(R.id.w_artist, Color.argb(a * 85 / 100, 255, 255, 255))
-        }
-
         private fun pi(ctx: Context, code: Int, action: String, frac: Float = -1f): PendingIntent {
             val i = Intent(ctx, P3xPlayerWidget::class.java).setAction(action)
             if (frac >= 0f) i.putExtra("frac", frac)
@@ -245,7 +274,7 @@ class P3xPlayerWidget : AppWidgetProvider() {
                 if (all.isEmpty()) return
                 val s = snap()
                 lastId = s.id
-                loadPicture(ctx, s, all[0]) { bmp ->
+                loadPicture(ctx, s.art, all[0]) { bmp ->
                     val v = rv(ctx)
                     v.setOnClickPendingIntent(R.id.w_prev, pi(ctx, 1, A_PREV))
                     v.setOnClickPendingIntent(R.id.w_play, pi(ctx, 2, A_PLAY))
@@ -261,16 +290,18 @@ class P3xPlayerWidget : AppWidgetProvider() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                     )
-                    v.setImageViewBitmap(R.id.w_bg, bmp)
-                    v.setTextViewText(
-                        R.id.w_title,
+                    val title =
                         if (s.id == null) ctx.getString(R.string.p3x_widget_idle) else s.title
-                    )
-                    v.setTextViewText(R.id.w_artist, s.artist)
-                    setAlpha(v, 255)
+                    for (k in 0..1) {
+                        v.setImageViewBitmap(bgIds[k], bmp)
+                        v.setTextViewText(titleIds[k], title)
+                        v.setTextViewText(artistIds[k], s.artist)
+                    }
+                    v.setDisplayedChild(R.id.w_flip, page)
                     setProgress(v, s)
                     awm.updateAppWidget(all, v)
                     painted = true
+                    prefetch(ctx, s, all[0])
                 }
                 main.removeCallbacks(tick)
                 if (s.playing) main.postDelayed(tick, 1000)
@@ -278,72 +309,64 @@ class P3xPlayerWidget : AppWidgetProvider() {
             }
         }
 
-        /** Song changed: everything fades out to black, swaps, fades back in. */
+        /**
+         * Song changed: the new picture + text go onto the hidden flipper page and the host
+         * cross-fades to it natively (smooth, one single update, no timers).
+         */
         private fun transitionTo(ctx: Context, s: Snap) {
-            val seq = ++fadeSeq
-            var bmp: Bitmap? = null
-            var loaded = false
-            var faded = false
-            fun swapAndFadeIn() {
-                if (seq != fadeSeq || !loaded || !faded) return
+            val seq = ++loadSeq
+            val first = ids(ctx).firstOrNull() ?: return
+            loadPicture(ctx, s.art, first) { b ->
+                if (seq != loadSeq) return@loadPicture
+                val t = 1 - page
                 partial(ctx) {
-                    setImageViewBitmap(R.id.w_bg, bmp)
+                    setImageViewBitmap(bgIds[t], b)
                     setTextViewText(
-                        R.id.w_title,
+                        titleIds[t],
                         if (s.id == null) ctx.getString(R.string.p3x_widget_idle) else s.title
                     )
-                    setTextViewText(R.id.w_artist, s.artist)
+                    setTextViewText(artistIds[t], s.artist)
                     setProgress(this, s)
-                    setAlpha(this, 0)
+                    setDisplayedChild(R.id.w_flip, t)
                 }
-                val ins = intArrayOf(60, 130, 200, 255)
-                ins.forEachIndexed { i, a ->
-                    main.postDelayed({
-                        if (seq == fadeSeq) partial(ctx) { setAlpha(this, a) }
-                    }, 70L * (i + 1))
-                }
+                page = t
+                prefetch(ctx, s, first)
             }
-            val outs = intArrayOf(190, 125, 60, 0)
-            outs.forEachIndexed { i, a ->
-                main.postDelayed({
-                    if (seq == fadeSeq) partial(ctx) { setAlpha(this, a) }
-                }, 70L * i)
-            }
+        }
+
+        /** Warm the cache with the next song's picture so the next switch is instant. */
+        private fun prefetch(ctx: Context, s: Snap, widgetId: Int) {
+            val next = s.nextArt ?: return
             main.postDelayed({
-                faded = true
-                swapAndFadeIn()
-            }, 70L * outs.size)
-            val first = ids(ctx).firstOrNull() ?: return
-            loadPicture(ctx, s, first) { b ->
-                bmp = b
-                loaded = true
-                swapAndFadeIn()
-            }
+                try {
+                    loadPicture(ctx, next, widgetId) { }
+                } catch (_: Throwable) {
+                }
+            }, 1200)
         }
 
         // ------------------------------------------------------------------ the picture
 
-        private fun loadPicture(ctx: Context, s: Snap, widgetId: Int, done: (Bitmap) -> Unit) {
+        private fun loadPicture(ctx: Context, art: Any?, widgetId: Int, done: (Bitmap) -> Unit) {
             val (w, h) = sizePx(ctx, widgetId)
-            val key = "${s.art}|$w|$h"
-            if (key == cacheKey && cacheBmp != null) {
-                done(cacheBmp!!)
+            val key = "$art|$w|$h"
+            pictures.get(key)?.let {
+                done(it)
                 return
             }
             fun finish(src: Bitmap?) {
                 val out = compose(src, w, h)
-                cacheKey = key
-                cacheBmp = out
+                pictures.put(key, out)
                 done(out)
             }
-            if (s.art == null) {
+            if (art == null) {
                 finish(null)
                 return
             }
             try {
                 ctx.imageLoader.enqueue(
                     ImageRequest.Builder(ctx).apply {
-                        data(s.art)
+                        data(art)
                         size(w, h)
                         allowConversionToBitmap(true)
                         scale(Scale.FILL)
@@ -360,6 +383,7 @@ class P3xPlayerWidget : AppWidgetProvider() {
 
         /** Widget shape in pixels, scaled down so the bitmap stays small (binder limit). */
         private fun sizePx(ctx: Context, id: Int): Pair<Int, Int> {
+            sizeCache?.let { return it }
             val d = ctx.resources.displayMetrics.density
             val o = try {
                 AppWidgetManager.getInstance(ctx).getAppWidgetOptions(id)
@@ -377,7 +401,7 @@ class P3xPlayerWidget : AppWidgetProvider() {
                 w = w * 720 / big
                 h = h * 720 / big
             }
-            return Pair(w.coerceAtLeast(64), h.coerceAtLeast(64))
+            return Pair(w.coerceAtLeast(64), h.coerceAtLeast(64)).also { sizeCache = it }
         }
 
         /** Picture, 20% dim, dimmed sides and a soft dark base under the text/controls. */
@@ -404,6 +428,11 @@ class P3xPlayerWidget : AppWidgetProvider() {
                 Color.argb(230, 0, 0, 0), Color.TRANSPARENT, Shader.TileMode.CLAMP
             )
             c.drawRect(w - side, 0f, w.toFloat(), h.toFloat(), p)
+            p.shader = LinearGradient(
+                0f, 0f, 0f, h * 0.32f,
+                Color.argb(190, 0, 0, 0), Color.TRANSPARENT, Shader.TileMode.CLAMP
+            )
+            c.drawRect(0f, 0f, w.toFloat(), h * 0.32f, p)
             p.shader = LinearGradient(
                 0f, h * 0.35f, 0f, h.toFloat(),
                 Color.TRANSPARENT, Color.argb(210, 0, 0, 0), Shader.TileMode.CLAMP
