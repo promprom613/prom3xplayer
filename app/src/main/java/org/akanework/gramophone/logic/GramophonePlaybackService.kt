@@ -333,6 +333,13 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
     override fun onCreate() {
         Log.i(TAG, "+onCreate()")
         super.onCreate()
+        ContextCompat.registerReceiver(
+            this,
+            volumeZeroReceiver,
+            IntentFilter("android.media.VOLUME_CHANGED_ACTION"),
+            @SuppressLint("WrongConstant")
+            ContextCompat.RECEIVER_EXPORTED
+        )
         instanceForWidgetAndLyricsOnly = this
         internalPlaybackThread.start()
         playbackHandler = Handler(internalPlaybackThread.looper)
@@ -609,13 +616,6 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
             @SuppressLint("WrongConstant") // why is this needed?
             ContextCompat.RECEIVER_EXPORTED
         )
-        ContextCompat.registerReceiver(
-            this,
-            volumeZeroReceiver,
-            IntentFilter("android.media.VOLUME_CHANGED_ACTION"),
-            @SuppressLint("WrongConstant")
-            ContextCompat.RECEIVER_EXPORTED
-        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O /* before 8, only sbc was supported */) {
             proxy = BtCodecInfo.getCodec(this) {
                 Log.d(TAG, "first bluetooth codec config $btInfo")
@@ -857,6 +857,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         mediaSession = null
         broadcastAudioSessionClose()
         LyricWidgetProvider.update(this)
+        org.akanework.gramophone.ui.P3xPlayerWidget.fullUpdate(this)
         internalPlaybackThread.quitSafely()
         super.onDestroy()
         Log.i(TAG, "-onDestroy()")
@@ -1682,6 +1683,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
 
     override fun onEvents(player: Player, events: Player.Events) {
         super<Player.Listener>.onEvents(player, events)
+        org.akanework.gramophone.ui.P3xPlayerWidget.onPlayerChanged(this)
         // if timeline changed, shuffle order is handled elsewhere instead (cloneAndInsert called by
         // ExoPlayer for common case and nextShuffleOrder for resumption case)
         if (events.contains(Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED)
