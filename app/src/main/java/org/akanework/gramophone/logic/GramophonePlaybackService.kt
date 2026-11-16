@@ -299,6 +299,20 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         }
     }
 
+    // pause playback when media volume is turned down to 0%
+    private val volumeZeroReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != "android.media.VOLUME_CHANGED_ACTION") return
+            if (intent.getIntExtra("android.media.EXTRA_VOLUME_STREAM_TYPE", -1)
+                != android.media.AudioManager.STREAM_MUSIC) return
+            val vol = intent.getIntExtra("android.media.EXTRA_VOLUME_STREAM_VALUE", -1)
+            val prev = intent.getIntExtra("android.media.EXTRA_PREV_VOLUME_STREAM_VALUE", -1)
+            if (vol == 0 && prev != 0) {
+                controller?.let { if (it.playWhenReady) it.pause() }
+            }
+        }
+    }
+
     private val btReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action.equals("android.bluetooth.a2dp.profile.action.CODEC_CONFIG_CHANGED") &&
@@ -595,6 +609,13 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
             @SuppressLint("WrongConstant") // why is this needed?
             ContextCompat.RECEIVER_EXPORTED
         )
+        ContextCompat.registerReceiver(
+            this,
+            volumeZeroReceiver,
+            IntentFilter("android.media.VOLUME_CHANGED_ACTION"),
+            @SuppressLint("WrongConstant")
+            ContextCompat.RECEIVER_EXPORTED
+        )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O /* before 8, only sbc was supported */) {
             proxy = BtCodecInfo.getCodec(this) {
                 Log.d(TAG, "first bluetooth codec config $btInfo")
@@ -817,6 +838,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         instanceForWidgetAndLyricsOnly = null
         unregisterReceiver(seekReceiver)
         unregisterReceiver(btReceiver)
+        unregisterReceiver(volumeZeroReceiver)
         prefs.unregisterOnSharedPreferenceChangeListener(this)
         // Important: this must happen before sending stop() as that changes state ENDED -> IDLE
         lastPlayedManager.save()
@@ -835,7 +857,6 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         mediaSession = null
         broadcastAudioSessionClose()
         LyricWidgetProvider.update(this)
-        org.akanework.gramophone.ui.P3xPlayerWidget.fullUpdate(this)
         internalPlaybackThread.quitSafely()
         super.onDestroy()
         Log.i(TAG, "-onDestroy()")
@@ -1661,7 +1682,6 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
 
     override fun onEvents(player: Player, events: Player.Events) {
         super<Player.Listener>.onEvents(player, events)
-        org.akanework.gramophone.ui.P3xPlayerWidget.onPlayerChanged(this)
         // if timeline changed, shuffle order is handled elsewhere instead (cloneAndInsert called by
         // ExoPlayer for common case and nextShuffleOrder for resumption case)
         if (events.contains(Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED)

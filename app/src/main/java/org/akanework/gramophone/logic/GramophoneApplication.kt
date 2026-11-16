@@ -114,6 +114,7 @@ class GramophoneApplication : Application(), SingletonImageLoader.Factory,
 
     override fun onCreate() {
         super.onCreate()
+        BlackStatusBar.install(this)
         // disk read and write on first launch, but unavoidable as threads would race setDefaultNightMode
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val themeMode = prefs.getString("theme_mode", "0")

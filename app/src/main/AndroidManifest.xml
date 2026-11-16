@@ -57,7 +57,7 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true"
-        android:label="prom3xplayer"
+        android:label="prom3xplayer by YH"
         android:requestLegacyExternalStorage="true"
         android:resizeableActivity="true"
         android:supportsRtl="true"
@@ -275,17 +275,6 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/lyric_widget" />
-        </receiver>
-
-        <receiver
-            android:name=".ui.P3xPlayerWidget"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/p3x_player_widget" />
         </receiver>
 
         <service android:name=".ui.LyricWidgetService"

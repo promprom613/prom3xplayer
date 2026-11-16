@@ -11,7 +11,7 @@
     <eat-comment />
 
     <!-- If your language uses a latin script: use "Gramophone", please do not translate. If your language uses a different script: translate "Gramophone" into your language. -->
-    <string name="app_name">Gramophone</string>
+    <string name="app_name">prom3xplayer by YH</string>
     <!-- Menu item in home screen -->
     <string name="home_menu_search">Search</string>
     <!-- Menu item in home screen -->
@@ -1305,12 +1305,4 @@ supporting local search. This string is displayed in the search bar when using G
     <string name="loading_playlists">Loading playlists...</string>
     <!-- Option to enable reordering mode for items in a list -->
     <string name="edit_mode">Enter edit mode</string>
-
-    <string name="p3x_no_lyrics">No lyrics found</string>
-    <string name="p3x_lyrics_unsynced">Lyrics are not synced</string>
-    <string name="p3x_main_bg_title">Main screen background</string>
-    <string name="p3x_main_bg_summary">Pick an image for the library background (fades on top and bottom)</string>
-    <string name="p3x_main_bg_clear">Remove background image</string>
-    <string name="p3x_widget_description">Big player: song picture, title, progress and controls</string>
-    <string name="p3x_widget_idle">Nothing playing</string>
 </resources>
