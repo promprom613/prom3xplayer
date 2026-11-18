@@ -49,6 +49,7 @@ class Sorter<T>(
         open fun getAddDate(item: T): Long = throw UnsupportedOperationException()
         open fun getReleaseDate(item: T): Long = throw UnsupportedOperationException()
         open fun getModifiedDate(item: T): Long = throw UnsupportedOperationException()
+        open fun isLiked(item: T): Boolean = throw UnsupportedOperationException()
         open fun getDiscAndTrack(item: T): Int = throw UnsupportedOperationException()
         fun canGetTitle(): Boolean = typesSupported.contains(Type.ByTitleAscending)
                 || typesSupported.contains(Type.ByTitleDescending)
@@ -105,6 +106,7 @@ class Sorter<T>(
         ByModifiedDateDescending, ByModifiedDateAscending,
         ByFilePathDescending, ByFilePathAscending,
         ByDiscAndTrack, ByDiscAndTrackDescending,
+        ByLikedDescending, ByLikedAscending,
         None;
 
         companion object {
@@ -139,6 +141,8 @@ class Sorter<T>(
                 ByFilePathAscending -> ByFilePathDescending
                 ByDiscAndTrack -> ByDiscAndTrackDescending
                 ByDiscAndTrackDescending -> ByDiscAndTrack
+                ByLikedDescending -> ByLikedAscending
+                ByLikedAscending -> ByLikedDescending
                 None -> null
             }
         }
@@ -359,6 +363,20 @@ class Sorter<T>(
                 )
             }
 
+            Type.ByLikedDescending -> {
+                SupportComparator.createInversionComparator(
+                    compareBy { if (sortingHelper.isLiked(it)) 1 else 0 }, true,
+                    if (sortingHelper.canGetTitle()) getComparatorNoReverse(Type.ByTitleAscending) else null
+                )
+            }
+
+            Type.ByLikedAscending -> {
+                SupportComparator.createInversionComparator(
+                    compareBy { if (sortingHelper.isLiked(it)) 1 else 0 }, false,
+                    if (sortingHelper.canGetTitle()) getComparatorNoReverse(Type.ByTitleAscending) else null
+                )
+            }
+
             Type.NaturalOrder -> {
                 SupportComparator.createInversionComparator(
                     compareBy { naturalOrderHelper!!.lookup(it) }, false
@@ -441,6 +459,8 @@ class Sorter<T>(
                     naturalOrderHelper!!.lookup(item)
                 } + 1).toString()
             }
+
+            Type.ByLikedDescending, Type.ByLikedAscending -> null
 
             Type.None -> null
         }?.ifEmpty { null }?.uppercase()

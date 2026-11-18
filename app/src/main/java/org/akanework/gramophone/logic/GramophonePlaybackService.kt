@@ -299,7 +299,10 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         }
     }
 
-    // pause playback when media volume is turned down to 0%
+    // pause playback when media volume is turned down to 0%, resume when it goes back up
+    // (only if that pause was caused by the volume, a manual pause stays paused)
+    private var pausedByVolume = false
+    private var volumeActionAt = 0L
     private val volumeZeroReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (intent.action != "android.media.VOLUME_CHANGED_ACTION") return
@@ -308,7 +311,17 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
             val vol = intent.getIntExtra("android.media.EXTRA_VOLUME_STREAM_VALUE", -1)
             val prev = intent.getIntExtra("android.media.EXTRA_PREV_VOLUME_STREAM_VALUE", -1)
             if (vol == 0 && prev != 0) {
-                controller?.let { if (it.playWhenReady) it.pause() }
+                controller?.let {
+                    if (it.playWhenReady) {
+                        pausedByVolume = true
+                        volumeActionAt = android.os.SystemClock.elapsedRealtime()
+                        it.pause()
+                    }
+                }
+            } else if (vol > 0 && prev == 0 && pausedByVolume) {
+                pausedByVolume = false
+                volumeActionAt = android.os.SystemClock.elapsedRealtime()
+                controller?.let { if (!it.playWhenReady) it.play() }
             }
         }
     }
@@ -1357,6 +1370,9 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         reason: @Player.PlayWhenReadyChangeReason Int
     ) {
         if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST) {
+            // a manual play/pause cancels the pending "resume when volume goes up"
+            if (android.os.SystemClock.elapsedRealtime() - volumeActionAt > 2000L)
+                pausedByVolume = false
             hapticTick()
         }
         if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_END_OF_MEDIA_ITEM) {

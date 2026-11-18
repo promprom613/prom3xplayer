@@ -63,22 +63,12 @@
 
         <org.akanework.gramophone.ui.components.NoAppFallbackPreference
             android:layout="@layout/preference_basic"
-            android:summary="https://github.com/FoedusProgramme/Gramophone"
+            android:summary="https://github.com/promprom613/prom3xplayer"
             android:title="@string/settings_repository"
             app:iconSpaceReserved="false">
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://github.com/FoedusProgramme/Gramophone" />
-        </org.akanework.gramophone.ui.components.NoAppFallbackPreference>
-
-        <org.akanework.gramophone.ui.components.NoAppFallbackPreference
-            android:layout="@layout/preference_basic"
-            android:summary="@string/check_for_updates"
-            android:title="@string/settings_telegram"
-            app:iconSpaceReserved="false">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://t.me/FoedusProgramme" />
+                android:data="https://github.com/promprom613/prom3xplayer" />
         </org.akanework.gramophone.ui.components.NoAppFallbackPreference>
 
     </PreferenceCategory>

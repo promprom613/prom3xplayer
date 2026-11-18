@@ -200,6 +200,20 @@
 
         </FrameLayout>
 
+        <ImageView
+            android:id="@+id/p3x_heart"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="14dp"
+            android:contentDescription="@string/playlist_favourite"
+            android:padding="11dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/p3x_heart"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@android:color/white" />
+
         <LinearLayout
             android:id="@+id/textLayout"
             android:layout_width="match_parent"

@@ -133,6 +133,9 @@ abstract class BaseAdapter<T : Any>(
         }
     override lateinit var sortType: MutableStateFlow<Sorter.Type>
 
+    /** Bump this to re-sort the current list (e.g. when liked songs change). */
+    protected val resortTrigger = MutableStateFlow(0)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private val flow by lazy {
         liveDataAgent.flatMapLatest { it }
@@ -140,7 +143,7 @@ abstract class BaseAdapter<T : Any>(
                 CoroutineScope(Dispatchers.Default),
                 SharingStarted.WhileSubscribed(), replay = 0
             )
-            .combine(sortType) { it, st ->
+            .combine(sortType.combine(resortTrigger) { st, _ -> st }) { it, st ->
                 val l = it ?: emptyList()
                 l to ArrayList(l).apply {
                     val (cmp, reverseFirst) = sorter.getComparator(st)
@@ -289,7 +292,12 @@ abstract class BaseAdapter<T : Any>(
         val subTitle: TextView = view.findViewById(R.id.artist)
         val trackCount: TextView? = view.findViewById(R.id.track_count)
         val moreButton: MaterialButton? = view.findViewById(R.id.more)
+        val defaultTitleColors: android.content.res.ColorStateList = title.textColors
+        var titleColored = false
     }
+
+    /** Return a color to override the title color of [item], or null for the default. */
+    protected open fun titleColorOf(item: T): Int? = null
 
     override fun onAttachedToRecyclerView(recyclerView: MyRecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
@@ -359,6 +367,14 @@ abstract class BaseAdapter<T : Any>(
             }
         }
         holder.title.text = titleOf(item) ?: virtualTitleOf(item)
+        val titleColor = titleColorOf(item)
+        if (titleColor != null) {
+            holder.title.setTextColor(titleColor)
+            holder.titleColored = true
+        } else if (holder.titleColored) {
+            holder.title.setTextColor(holder.defaultTitleColors)
+            holder.titleColored = false
+        }
         holder.subTitle.text = subTitleOf(item)
         holder.songCover.load(coverOf(item)) {
             placeholderScaleToFit(defaultCover)

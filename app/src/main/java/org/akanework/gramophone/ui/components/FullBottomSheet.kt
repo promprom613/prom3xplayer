@@ -111,6 +111,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.akanework.gramophone.R
 import org.akanework.gramophone.logic.GramophonePlaybackService
+import org.akanework.gramophone.logic.Haptics
+import org.akanework.gramophone.logic.LikedSongs
 import org.akanework.gramophone.logic.clone
 import org.akanework.gramophone.logic.dpToPx
 import org.akanework.gramophone.logic.fadInAnimation
@@ -268,6 +270,12 @@ class FullBottomSheet
     private val bottomSheetTimerButton: MaterialButton
     private val bottomSheetPlaybackSpeedButton: MaterialButton
     private val bottomSheetFavoriteButton: MaterialButton
+    private val p3xHeart: android.widget.ImageView?
+    private var p3xLiked = false
+    private var p3xPendingUntil = 0L
+    private var p3xAnim: ValueAnimator? = null
+    var p3xTitleBase: Int = 0
+        private set
     val bottomSheetLyricButton: MaterialButton
     private val bottomSheetFullSeekBar: SeekBar
     private val bottomSheetFullSlider: Slider
@@ -295,6 +303,9 @@ class FullBottomSheet
         bottomSheetTimerButton = findViewById(R.id.timer)
         bottomSheetPlaybackSpeedButton = findViewById(R.id.playback_speed)
         bottomSheetFavoriteButton = findViewById(R.id.favor)
+        p3xHeart = findViewById(R.id.p3x_heart)
+        p3xTitleBase = bottomSheetFullTitle.textColors.defaultColor
+        p3xHeart?.setOnClickListener { p3xToggleLike() }
         bottomSheetPlaylistButton = findViewById(R.id.playlist)
         bottomSheetLyricButton = findViewById(R.id.lyrics)
         bottomSheetFullQualityDetails = findViewById(R.id.quality_details)
@@ -1149,7 +1160,7 @@ class FullBottomSheet
             )
 
             val primaryTransition = ValueAnimator.ofArgb(
-                bottomSheetFullTitle.textColors.defaultColor,
+                p3xTitleBase,
                 colorPrimary
             )
 
@@ -1359,8 +1370,9 @@ class FullBottomSheet
         postOnAnimation {
             setBackgroundColor(backgroundProcessedColor)
             bottomSheetFullLyricView.setBackgroundColor(backgroundProcessedColor)
+            p3xTitleBase = colorPrimary
             bottomSheetFullTitle.setTextColor(
-                colorPrimary
+                if (p3xLiked) LikedSongs.PINK else colorPrimary
             )
             bottomSheetFullSubtitle.setTextColor(
                 colorSecondary
@@ -1441,6 +1453,8 @@ class FullBottomSheet
         mediaItem: MediaItem?,
         reason: Int
     ) {
+        p3xPendingUntil = 0L
+        p3xSetLiked((mediaItem?.mediaMetadata?.userRating as? HeartRating)?.isHeart == true)
         if (instance?.mediaItemCount != 0) {
             bottomSheetFullCover.dispose()
             bottomSheetFullCover.loadNoPlaceholder(mediaItem?.mediaMetadata?.artworkUri) {
@@ -1468,6 +1482,7 @@ class FullBottomSheet
 
     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
         val isHeart = (mediaMetadata.userRating as? HeartRating)?.isHeart == true
+        p3xSetLiked(isHeart)
         if (bottomSheetFavoriteButton.isChecked != isHeart) {
             bottomSheetFavoriteButton.removeOnCheckedChangeListener(this)
             bottomSheetFavoriteButton.isChecked =
@@ -1495,6 +1510,81 @@ class FullBottomSheet
             }
             bottomSheetFullLyricView.updateLyricPositionFromPlaybackPos()
             polish?.updateLyricLine()
+        }
+    }
+
+    /** Title color for [item]: bright pink when liked, normal theme color otherwise. */
+    fun p3xTitleColorFor(item: MediaItem?): Int =
+        if (LikedSongs.isLiked(item?.mediaId)) LikedSongs.PINK else p3xTitleBase
+
+    private fun p3xToggleLike() {
+        val song = instance?.currentMediaItem ?: return
+        val entry = Entry.ofMediaItem(song) ?: return
+        val now = !p3xLiked
+        p3xLiked = now
+        // the player reports the old rating until the favorites file is written, ignore that
+        p3xPendingUntil = android.os.SystemClock.uptimeMillis() + 6000L
+        p3xRenderLiked(true)
+        Haptics.tick(context)
+        activity.markIsFavoriteStatus(listOf(entry), now)
+    }
+
+    /** Applies the liked state reported by the player (song change / rating change). */
+    private fun p3xSetLiked(liked: Boolean) {
+        if (liked != p3xLiked && android.os.SystemClock.uptimeMillis() < p3xPendingUntil) return
+        if (liked == p3xLiked) {
+            if (p3xAnim?.isRunning == true) return
+            val heartOk = p3xHeart == null || p3xHeart.imageTintList?.defaultColor ==
+                (if (liked) LikedSongs.PINK else Color.WHITE)
+            val titleOk = bottomSheetFullTitle.currentTextColor ==
+                (if (liked) LikedSongs.PINK else p3xTitleBase)
+            if (heartOk && titleOk) return
+        }
+        p3xLiked = liked
+        p3xRenderLiked(false)
+    }
+
+    private fun p3xRenderLiked(animate: Boolean) {
+        val heart = p3xHeart
+        val toHeart = if (p3xLiked) LikedSongs.PINK else Color.WHITE
+        val toTitle = if (p3xLiked) LikedSongs.PINK else p3xTitleBase
+        p3xAnim?.cancel()
+        p3xAnim = null
+        if (!animate) {
+            heart?.imageTintList = ColorStateList.valueOf(toHeart)
+            bottomSheetFullTitle.setTextColor(toTitle)
+            return
+        }
+        val fromHeart = heart?.imageTintList?.defaultColor ?: Color.WHITE
+        val fromTitle = bottomSheetFullTitle.currentTextColor
+        p3xAnim = ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 220
+            addUpdateListener {
+                val f = it.animatedFraction
+                heart?.imageTintList = ColorStateList.valueOf(
+                    androidx.core.graphics.ColorUtils.blendARGB(fromHeart, toHeart, f)
+                )
+                bottomSheetFullTitle.setTextColor(
+                    androidx.core.graphics.ColorUtils.blendARGB(fromTitle, toTitle, f)
+                )
+            }
+            start()
+        }
+        heart?.let { h ->
+            h.animate().cancel()
+            h.scaleX = 1f
+            h.scaleY = 1f
+            if (p3xLiked) {
+                h.animate().scaleX(1.35f).scaleY(1.35f).setDuration(110).withEndAction {
+                    h.animate().scaleX(1f).scaleY(1f).setDuration(190)
+                        .setInterpolator(android.view.animation.OvershootInterpolator(2f))
+                        .start()
+                }.start()
+            } else {
+                h.animate().scaleX(0.8f).scaleY(0.8f).setDuration(90).withEndAction {
+                    h.animate().scaleX(1f).scaleY(1f).setDuration(140).start()
+                }.start()
+            }
         }
     }
 

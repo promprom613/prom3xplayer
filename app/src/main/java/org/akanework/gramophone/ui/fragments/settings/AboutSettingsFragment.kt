@@ -30,7 +30,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.akanework.gramophone.BuildConfig
 import org.akanework.gramophone.R
 import org.akanework.gramophone.logic.utils.ColorUtils
-import org.akanework.gramophone.logic.utils.data.Contributors
 import org.akanework.gramophone.ui.fragments.BasePreferenceFragment
 import org.akanework.gramophone.ui.fragments.BaseSettingsActivity
 
@@ -49,7 +48,7 @@ class AboutSettingsFragment : BasePreferenceFragment() {
         contributorsPref!!.summary =
             requireContext().getString(
                 R.string.settings_contributors_click,
-                Contributors.LIST.subList(0, 5).joinToString { it.login })
+                "YH, Gramophone contributors")
     }
 
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
@@ -75,7 +74,10 @@ class AboutSettingsFragment : BasePreferenceFragment() {
                 BuildConfig.VERSION_NAME
             val aboutTextView = rootView.findViewById<TextView>(R.id.about_text)!!
             aboutTextView.text = requireContext()
-                .getString(R.string.opensource_info, "© 2023-2026 AkaneTan, nift4 and contributors")
+                .getString(
+                    R.string.opensource_info,
+                    "© 2026 YH\nBased on Gramophone, © 2023-2026 AkaneTan, nift4 and contributors"
+                )
         } else if (preference.key == "contributors") {
             startActivity(ContributorsSettingsActivity::class.java)
         } else if (preference.key == "package_type") {
@@ -89,6 +91,7 @@ class AboutSettingsFragment : BasePreferenceFragment() {
                 .setTitle(R.string.settings_open_source_licenses)
                 .setMessage(
                     """
+                        Copyright (C) 2026 YH (prom3xplayer)
                         Copyright (C) 2023-2024 AkaneTan
                         Copyright (C) 2023-2026 nift4
                         Copyright (C) 2024 The Gramophone authors

@@ -247,6 +247,7 @@ class GramophoneApplication : Application(), SingletonImageLoader.Factory,
                 shouldUseEnhancedCoverReadingFlow!!,
             recentlyAddedFilterSecondFlow
         )
+        LikedSongs.start(this)
         // Set application theme when launching.
         when (themeMode) {
             "0" -> {

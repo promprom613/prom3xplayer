@@ -69,6 +69,7 @@
     <string name="sort_by_size">Size</string>
     <!-- Sort songs/albums/etc by name (A-Z) -->
     <string name="sort_by_name">Name</string>
+    <string name="sort_by_liked">Liked</string>
     <!-- Sort songs/albums/etc by artist (A-Z) -->
     <string name="sort_by_artist">Artist</string>
     <!-- Sort songs by album's name (A-Z) -->

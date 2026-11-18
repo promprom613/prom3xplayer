@@ -183,7 +183,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     private val noLyricsRunnable = Runnable {
         if (lyricState == 0) {
             lyricState = 1
-            showLine(sheet.context.getString(R.string.p3x_no_lyrics))
+            showLine("")
         }
     }
     private val slop = ViewConfiguration.get(sheet.context).scaledTouchSlop
@@ -450,7 +450,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         val dt = detailsText(md)
         g.details.text = dt
         g.details.visibility = if (dt.isEmpty()) View.GONE else View.VISIBLE
-        g.title.setTextColor(v.title.currentTextColor)
+        g.title.setTextColor(sheet.p3xTitleColorFor(item))
         g.title.setTextSize(TypedValue.COMPLEX_UNIT_PX, v.title.textSize)
         g.title.typeface = v.title.typeface
         g.artist.setTextColor(v.artist.currentTextColor)
@@ -480,7 +480,7 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         when {
             l == null || l.unsyncedText.isEmpty() -> {
                 lyricState = 1
-                showLine(sheet.context.getString(R.string.p3x_no_lyrics))
+                showLine("")
             }
             synced != null && synced.text.isNotEmpty() -> {
                 lyricState = 2

@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.akanework.gramophone.R
+import org.akanework.gramophone.logic.LikedSongs
 import org.akanework.gramophone.logic.getBooleanStrict
 import org.akanework.gramophone.logic.getFile
 import org.akanework.gramophone.logic.gramophoneApplication
@@ -169,8 +170,22 @@ class SongAdapter(
         }
     }
 
+    private val likedListener: () -> Unit = { onLikedChanged() }
+
+    @SuppressLint("NotifyDataSetChanged")
+    private fun onLikedChanged() {
+        notifyDataSetChanged() // pink titles
+        val st = sortType.value
+        if (st == Sorter.Type.ByLikedDescending || st == Sorter.Type.ByLikedAscending)
+            resortTrigger.value++
+    }
+
+    override fun titleColorOf(item: MediaItem): Int? =
+        if (LikedSongs.isLiked(item.mediaId)) LikedSongs.PINK else null
+
     override fun onAttachedToRecyclerView(recyclerView: MyRecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
+        LikedSongs.addListener(likedListener)
         if (folder) {
             prefs.registerOnSharedPreferenceChangeListener(this)
             showFileNames = prefs.getBooleanStrict("show_file_names", true)
@@ -179,6 +194,7 @@ class SongAdapter(
 
     override fun onDetachedFromRecyclerView(recyclerView: MyRecyclerView) {
         super.onDetachedFromRecyclerView(recyclerView)
+        LikedSongs.removeListener(likedListener)
         if (folder)
             prefs.unregisterOnSharedPreferenceChangeListener(this)
     }
@@ -378,9 +394,14 @@ class SongAdapter(
             Sorter.Type.ByReleaseDateDescending, Sorter.Type.ByReleaseDateAscending,
             Sorter.Type.ByModifiedDateDescending, Sorter.Type.ByModifiedDateAscending,
             Sorter.Type.ByFilePathDescending, Sorter.Type.ByFilePathAscending,
-            Sorter.Type.ByDiscAndTrack
+            Sorter.Type.ByDiscAndTrack,
+            Sorter.Type.ByLikedDescending, Sorter.Type.ByLikedAscending
         )
     ) {
+        override fun isLiked(item: MediaItem): Boolean {
+            return LikedSongs.isLiked(item.mediaId)
+        }
+
         override fun getId(item: MediaItem): String {
             return item.mediaId
         }
