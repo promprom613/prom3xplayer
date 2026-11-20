@@ -1,94 +1,44 @@
-# Gramophone
-![GitHub](https://img.shields.io/github/license/FoedusProgramme/Gramophone?style=flat-square&logoColor=white&labelColor=black&color=white)
-![GitHub tag (with filter)](https://img.shields.io/github/v/tag/FoedusProgramme/Gramophone?style=flat-square&logoColor=white&labelColor=black&color=white)
-[![Static Badge](https://img.shields.io/badge/Telegram-Content?style=flat-square&logo=telegram&logoColor=black&color=white)](https://t.me/FoedusProgramme)
+# prom3xplayer by YH
 
-[日本語](./readme_ja.md)
+A light, fast, ad-free music player for Android. No accounts, no tracking, no internet needed.
+Built by **YH** (prom3x209) on top of the excellent open-source
+[Gramophone](https://github.com/FoedusProgramme/Gramophone), and made to feel simple and quick
+even on modest phones.
 
-A sane music player built with media3 and the Material Design library that is following Android's standard strictly.
+## What makes it different
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/org.akanework.gramophone/)
-[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80">](https://apt.izzysoft.de/fdroid/index/apk/org.akanework.gramophone)
-[<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" alt="Get it on Google Play" height="80">](https://play.google.com/store/apps/details?id=org.akanework.gramophone&utm_source=github.com&utm_campaign=readme)
+- **Like with style** - tap the white heart, swipe a song left, or use the sort menu: liked songs
+  glow bright pink (`#FF00FF`) in the player and in every list, and can be sorted to the top.
+- **Swipe your songs** - swipe a song left to like it, right to play it next. Swipe several songs
+  right and they line up in swipe order, an instant play-next list.
+- **Plus button** - add the playing song to any playlist right from the player, with an icon that
+  follows the cover colors.
+- **Volume trick** - turn the volume to 0 and the music pauses, raise it and it continues
+  (both can be switched off in Settings).
+- **Playlist covers** - give every playlist your own picture.
+- **Ringtone and notification sound** - set any song of your library from the song menu or from
+  Settings.
+- **Built-in tutorial** - a full walkthrough of every gesture and hidden feature, shown on first
+  launch and replayable from Settings.
+- **Clean black look** - always-black status bar, tidy player, no "No lyrics found" clutter.
+- Everything Gramophone is great at: local library, folders, albums, artists, genres, lyrics,
+  sleep timer, playback speed, ReplayGain, gapless playback and more.
 
-## Features
-- Light, stable, and minimalistic
-- Up-to-date Material 3 design and theme
-  - Dynamic player UI Monet color
-  - Monet themed icon (Android 12+)
-- Music library features
-  - Search and browse for your favourite music
-  - Uses MediaStore to quickly access on-device music
-  - List and grid views
-  - Browse songs by folder and filesystem
-  - Natural sorting and various other sorting options
-  - Playlist support
-- Synced lyrics
-  - LRC, TTML, SRT
-  - Supports word/syllable Karaoke lyrics synchronization
-- Full support for ReplayGain 2.0
-- Support for system/third-party Equalizer apps
+## Install
 
-## Screenshots
-| ![Screenshot 1](https://raw.githubusercontent.com/FoedusProgramme/Gramophone/beta/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_1.jpg) | ![Screenshot 2](https://raw.githubusercontent.com/FoedusProgramme/Gramophone/beta/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_2.jpg) | ![Screenshot 3](https://raw.githubusercontent.com/FoedusProgramme/Gramophone/beta/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_3.jpg) |
-|------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ![Screenshot 4](https://raw.githubusercontent.com/FoedusProgramme/Gramophone/beta/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_4.jpg) | ![Screenshot 5](https://raw.githubusercontent.com/FoedusProgramme/Gramophone/beta/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_5.jpg) | ![Screenshot 6](https://raw.githubusercontent.com/FoedusProgramme/Gramophone/beta/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_6.jpg) |
-| ![Screenshot 7](https://raw.githubusercontent.com/FoedusProgramme/Gramophone/beta/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_7.jpg) | ![Screenshot 8](https://raw.githubusercontent.com/FoedusProgramme/Gramophone/beta/fastlane/metadata/android/en-US/images/phoneScreenshots/screenshot_8.jpg) | ![Screenshot 9](https://raw.githubusercontent.com/FoedusProgramme/Gramophone/beta/fastlane/screenshot_9.jpg) |
+1. Open the **Releases** page of this repository.
+2. Download the newest `.apk` and install it (allow installs from your browser if Android asks).
+3. Open the app and follow the short tutorial.
 
+Builds are signed with a fresh key each time, so when updating, uninstall the old version first.
 
-## Installation
-You can download the latest stable version of the app from either [GitHub releases](https://github.com/FoedusProgramme/Gramophone/releases/latest), [F-Droid](https://f-droid.org/packages/org.akanework.gramophone/), or from [IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/org.akanework.gramophone).
+## Build it yourself
 
-Beta versions and sneak peeks are available in the [telegram channel](https://t.me/FoedusProgramme) or [chat](https://t.me/FoedusDiscussion).
+You do not need a PC. In the **Actions** tab choose **Build fork**, press **Run workflow**
+(tick *release* to publish the APK as a release) and download the APK when it finishes.
 
-## Building
-To build this app, you will need the latest beta version of [Android Studio](https://developer.android.com/studio) and a fast network.
+## Credits and license
 
-### 1. Submodules
-
-Gramophone includes certain dependencies such as media3 as git submodule. Make sure you download git submodules by running `git submodule update --init --recursive` before trying to build Gramophone.
-
-### 2. Set up package type
-Gramophone has a package type that indicates the source of the application package. Package type string is extracted from an external file named `package.properties`.
-
-Simply open your favorite text editor, type `releaseType=SelfBuilt`, and save it in the root folder of the repository as `package.properties`.
-
-### 3. Start the build
-Launch Android Studio and import your own app signing signature. You should be able to build Gramophone now.
-
-## License
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](https://github.com/FoedusProgramme/Gramophone/blob/beta/LICENSE) file for details.
-
-## Translation
-<a href="https://hosted.weblate.org/engage/gramophone/">
-<img src="https://hosted.weblate.org/widget/gramophone/strings-xml/horizontal-auto.svg" alt="Translation status" />
-</a>
-
-## Notice
-- Discussion chat: [Telegram](https://t.me/FoedusDiscussion)
-- GitHub/F-Droid/IzzyOnDroid certificate SHA-256 digest: f451197ad7b80bd1bc981ba38a2c49d471856fb38bcc333676d6e8f8f3ce5d6e
-- Play Store certificate SHA-256 digest: 178869b0f9130d145b53404df4d4e5e311095406cb3c51a3e7a4b03bb3e87786
-
-## FAQ
-
-**Why can't I see songs shorter than 60 seconds?**
-Gramophone hides songs shorter than 60 seconds by default. You can change it in _Three dots > Settings > Behaviour_ (set the setting to 0 to show all songs).
-
-**I changed the minimum song length setting, but some songs are still missing!**
-Make sure you haven't excluded the folder in _Behaviour > Folder blacklist_.
-Then, try to reboot your phone, then wait a few minutes (this will rescan the system-wide media database that Gramophone uses to find songs).
-If it's still not visible, your system version may not support scanning this file extension: this is most commonly observed for .opus, which will only be scanned since Android 10 (pro tip: rename your .opus file to .ogg, and it will be detected on Android 6 and later).
-
-**My song isn't playing! / My song is playing, but it's completely silent, yet the volume is turned up!**
-Please note that Gramophone relies on system media codecs to make the app smaller. This means
-- int32 (32-bit) FLAC files will only work on Android 14 or later
-- FLAC files often do work even on versions prior to Android 8, but are only officially supported on Android 8 or later
-- xHE-AAC files in general will only work on Android 9 or later
-- Dolby Digital (AC-3) / Dolby Digital Plus (E-AC-3) / AC-4 requires a device that has licensed decoders for these formats
-
-There is one exception: ALAC files can be played even without the system ALAC decoder as Gramophone includes an extremely lightweight Java ALAC decoder.
-
-## Friends
-[SongSync](https://github.com/lambada10/songsync)
+prom3xplayer is a fork of [Gramophone](https://github.com/FoedusProgramme/Gramophone) by
+AkaneTan, nift4 and contributors. It is free software under the **GNU GPL v3**, see
+[LICENSE](LICENSE). Copyright (C) 2026 YH for the changes in this fork.

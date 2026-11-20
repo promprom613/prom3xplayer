@@ -49,6 +49,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.akanework.gramophone.R
 import org.akanework.gramophone.logic.gramophoneApplication
+import org.akanework.gramophone.logic.ui.MyRecyclerView
 import org.akanework.gramophone.ui.PlaylistPickerActivity
 import org.akanework.gramophone.ui.fragments.AdapterFragment
 import org.akanework.gramophone.ui.fragments.GeneralSubFragment
@@ -116,7 +117,25 @@ class PlaylistAdapter(
         }
     }
 
+    private val coversListener: () -> Unit = { onCoversChanged() }
+
+    @android.annotation.SuppressLint("NotifyDataSetChanged")
+    private fun onCoversChanged() {
+        notifyDataSetChanged()
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: MyRecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        org.akanework.gramophone.logic.PlaylistCovers.addListener(coversListener)
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: MyRecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        org.akanework.gramophone.logic.PlaylistCovers.removeListener(coversListener)
+    }
+
     override fun coverOf(item: Playlist): Uri? {
+        org.akanework.gramophone.logic.PlaylistCovers.uriFor(context, item.id)?.let { return it }
         return if (item.title != null) {
             item.cover?.toUriCompat() ?: super.coverOf(item)
         } else
@@ -147,10 +166,14 @@ class PlaylistAdapter(
         popupMenu.inflate(R.menu.more_menu)
         val canRename = item.title != null
         val canDelete = item.id != null
+        val canCover = item.id != null
+        val hasCover = org.akanework.gramophone.logic.PlaylistCovers.hasCover(context, item.id)
         popupMenu.menu.iterator().forEach {
             it.isVisible = it.itemId == R.id.play_next || it.itemId == R.id.add_to_queue
                     || (canRename && it.itemId == R.id.rename)
                     || (canDelete && it.itemId == R.id.delete)
+                    || (canCover && it.itemId == R.id.change_cover)
+                    || (hasCover && it.itemId == R.id.reset_cover)
         }
         popupMenu.setOnMenuItemClickListener { it1 ->
             when (it1.itemId) {
@@ -167,6 +190,17 @@ class PlaylistAdapter(
                     mediaController?.addMediaItems(
                         item.songList,
                     )
+                }
+
+                R.id.change_cover -> {
+                    item.id?.let { mainActivity.p3xChooseCover(it) }
+                }
+
+                R.id.reset_cover -> {
+                    item.id?.let {
+                        org.akanework.gramophone.logic.PlaylistCovers.reset(context, it)
+                        org.akanework.gramophone.logic.PlaylistCovers.notifyChanged()
+                    }
                 }
 
                 R.id.delete -> {

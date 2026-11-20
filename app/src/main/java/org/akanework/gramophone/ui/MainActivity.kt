@@ -757,6 +757,7 @@ class MainActivity : BaseActivity() {
         handler.removeCallbacks(reportFullyDrawnRunnable)
         if (ready) throw IllegalStateException("ready is already true")
         ready = true
+        p3xMaybeShowTutorial()
         Choreographer.getInstance().postFrameCallback {
             handler.postAtFrontOfQueueAsync {
                 try {
@@ -921,6 +922,58 @@ class MainActivity : BaseActivity() {
         contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
     } catch (_: Throwable) {
         null
+    }
+
+    private var p3xCoverId: Long? = null
+    private val p3xPickCover =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            val id = p3xCoverId
+            p3xCoverId = null
+            if (uri == null || id == null) return@registerForActivityResult
+            lifecycleScope.launch {
+                val ok = withContext(Dispatchers.IO) {
+                    org.akanework.gramophone.logic.PlaylistCovers.save(this@MainActivity, id, uri)
+                }
+                Toast.makeText(
+                    this@MainActivity,
+                    if (ok) R.string.p3x_cover_saved else R.string.p3x_cover_failed,
+                    Toast.LENGTH_SHORT
+                ).show()
+                if (ok) org.akanework.gramophone.logic.PlaylistCovers.notifyChanged()
+            }
+        }
+
+    /** Lets the user pick a picture from the gallery as the cover of playlist [id]. */
+    fun p3xChooseCover(id: Long) {
+        p3xCoverId = id
+        try {
+            p3xPickCover.launch("image/*")
+        } catch (e: Exception) {
+            Toast.makeText(this, R.string.p3x_cover_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private var p3xTutorialShown = false
+
+    /** Shows the walkthrough once, the first time the app is opened and ready for use. */
+    private fun p3xMaybeShowTutorial() {
+        if (p3xTutorialShown || !ready || !hasWindowFocus()) return
+        if (prefs.getBoolean(TutorialActivity.PREF_DONE, false)) return
+        p3xTutorialShown = true
+        handler.postDelayed({
+            if (!isFinishing && !isDestroyed)
+                startActivity(Intent(this, TutorialActivity::class.java))
+        }, 700)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        p3xMaybeShowTutorial()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) p3xMaybeShowTutorial()
     }
 
     override fun onDestroy() {

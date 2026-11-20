@@ -271,6 +271,7 @@ class FullBottomSheet
     private val bottomSheetPlaybackSpeedButton: MaterialButton
     private val bottomSheetFavoriteButton: MaterialButton
     private val p3xHeart: android.widget.ImageView?
+    private val p3xAdd: android.widget.ImageView?
     private var p3xLiked = false
     private var p3xPendingUntil = 0L
     private var p3xAnim: ValueAnimator? = null
@@ -306,6 +307,15 @@ class FullBottomSheet
         p3xHeart = findViewById(R.id.p3x_heart)
         p3xTitleBase = bottomSheetFullTitle.textColors.defaultColor
         p3xHeart?.setOnClickListener { p3xToggleLike() }
+        p3xAdd = findViewById(R.id.p3x_add)
+        p3xAdd?.imageTintList = ColorStateList.valueOf(p3xTitleBase)
+        p3xAdd?.setOnClickListener {
+            val song = instance?.currentMediaItem
+            if (song != null) {
+                Haptics.tick(context)
+                activity.addToPlaylistDialog(song)
+            }
+        }
         bottomSheetPlaylistButton = findViewById(R.id.playlist)
         bottomSheetLyricButton = findViewById(R.id.lyrics)
         bottomSheetFullQualityDetails = findViewById(R.id.quality_details)
@@ -1245,6 +1255,7 @@ class FullBottomSheet
                     bottomSheetFullSeekBar.thumbTintList =
                         ColorStateList.valueOf(progressColor)
                     bottomSheetFullLyricView.updateHighlightColor(progressColor)
+                    p3xAdd?.imageTintList = ColorStateList.valueOf(progressColor)
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1371,6 +1382,7 @@ class FullBottomSheet
             setBackgroundColor(backgroundProcessedColor)
             bottomSheetFullLyricView.setBackgroundColor(backgroundProcessedColor)
             p3xTitleBase = colorPrimary
+            p3xAdd?.imageTintList = ColorStateList.valueOf(colorPrimary)
             bottomSheetFullTitle.setTextColor(
                 if (p3xLiked) LikedSongs.PINK else colorPrimary
             )

@@ -42,6 +42,11 @@ class MainSettingsFragment : BasePreferenceFragment() {
                 startActivity(BehaviorSettingsActivity::class.java)
             }
 
+            "p3x_tutorial" -> {
+                startActivity(org.akanework.gramophone.ui.TutorialActivity::class.java)
+                return true
+            }
+
             "about" -> {
                 startActivity(AboutSettingsActivity::class.java)
             }

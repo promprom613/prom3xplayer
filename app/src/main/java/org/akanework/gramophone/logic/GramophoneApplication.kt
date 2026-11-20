@@ -248,6 +248,7 @@ class GramophoneApplication : Application(), SingletonImageLoader.Factory,
             recentlyAddedFilterSecondFlow
         )
         LikedSongs.start(this)
+        SettingsPrewarm.start(this)
         // Set application theme when launching.
         when (themeMode) {
             "0" -> {

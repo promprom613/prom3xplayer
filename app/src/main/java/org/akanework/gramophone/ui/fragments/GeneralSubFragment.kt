@@ -140,10 +140,38 @@ class GeneralSubFragment : BaseFragment(true) {
                 }
                 itemList = item.map { it?.songList }
                 rawOrderExposed = Sorter.Type.NaturalOrder
-                if (clazz == Playlist::class.java.name) {
+                if (clazz == Playlist::class.java.name || clazz == Favorite::class.java.name) {
                     topAppBar.inflateMenu(R.menu.playlist_subfragment_menu)
+                    if (clazz != Playlist::class.java.name)
+                        topAppBar.menu.findItem(R.id.edit)?.isVisible = false
                     topAppBar.setOnMenuItemClickListener {
                         when (it.itemId) {
+                            R.id.p3x_cover -> {
+                                val pid = id
+                                if (pid != null) {
+                                    val ctx = requireContext()
+                                    val items = if (org.akanework.gramophone.logic.PlaylistCovers
+                                            .hasCover(ctx, pid))
+                                        arrayOf(
+                                            getString(R.string.p3x_change_cover),
+                                            getString(R.string.p3x_reset_cover)
+                                        )
+                                    else arrayOf(getString(R.string.p3x_change_cover))
+                                    com.google.android.material.dialog.MaterialAlertDialogBuilder(ctx)
+                                        .setItems(items) { _, which ->
+                                            if (which == 0) mainActivity.p3xChooseCover(pid)
+                                            else {
+                                                org.akanework.gramophone.logic.PlaylistCovers
+                                                    .reset(ctx, pid)
+                                                org.akanework.gramophone.logic.PlaylistCovers
+                                                    .notifyChanged()
+                                            }
+                                        }
+                                        .show()
+                                }
+                                true
+                            }
+
                             R.id.edit -> {
                                 mainActivity.startFragment(PlaylistEditFragment()) {
                                     putString("Id", id?.toString())

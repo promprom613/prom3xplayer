@@ -1,6 +1,14 @@
 name: Build fork
 on:
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Also publish a GitHub release with the APK"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -41,3 +49,12 @@ jobs:
         with:
           name: prom3xplayer-release
           path: app/build/outputs/apk/release/*.apk
+      - name: Publish release
+        if: ${{ inputs.release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: prom3xplayer by YH v1.${{ github.run_number }}
+          body_path: RELEASE_NOTES.md
+          files: app/build/outputs/apk/release/*.apk

@@ -171,6 +171,53 @@ class SongAdapter(
     }
 
     private val likedListener: () -> Unit = { onLikedChanged() }
+    private var swipeCallback: SongSwipeCallback? = null
+    private var swipeToast: Toast? = null
+
+    private fun p3xToast(text: String) {
+        swipeToast?.cancel()
+        swipeToast = Toast.makeText(context, text, Toast.LENGTH_SHORT).also { it.show() }
+    }
+
+    /** Swipe left: like (or unlike when it already is liked). */
+    private fun p3xSwipeLike(song: MediaItem) {
+        val entry = uk.akane.libphonograph.manipulator.PlaylistSerializer.Entry.ofMediaItem(song)
+            ?: return
+        val nowLiked = !LikedSongs.isLiked(song.mediaId)
+        org.akanework.gramophone.logic.Haptics.tick(context)
+        LikedSongs.setLocal(song.mediaId, nowLiked)
+        mainActivity.markIsFavoriteStatus(listOf(entry), nowLiked)
+        p3xToast(context.getString(if (nowLiked) R.string.p3x_swipe_liked else R.string.p3x_swipe_unliked))
+    }
+
+    /** Swipe right: play next. Songs swiped one after another line up in swipe order. */
+    private fun p3xSwipePlayNext(song: MediaItem) {
+        val player = mainActivity.getPlayer() ?: return
+        org.akanework.gramophone.logic.Haptics.tick(context)
+        val extras = android.os.Bundle(song.mediaMetadata.extras ?: android.os.Bundle.EMPTY)
+        extras.putBoolean(P3X_SWIPE_KEY, true)
+        val marked = song.buildUpon().setMediaMetadata(
+            song.mediaMetadata.buildUpon().setExtras(extras).build()
+        ).build()
+        if (player.mediaItemCount == 0) {
+            player.setMediaItem(marked)
+            player.prepare()
+            player.play()
+            p3xToast(context.getString(R.string.p3x_swipe_next))
+            return
+        }
+        val current = player.currentMediaItemIndex
+        var idx = current + 1
+        while (idx < player.mediaItemCount &&
+            player.getMediaItemAt(idx).mediaMetadata.extras?.getBoolean(P3X_SWIPE_KEY) == true
+        ) idx++
+        player.addMediaItem(idx, marked)
+        val place = idx - current
+        p3xToast(
+            if (place <= 1) context.getString(R.string.p3x_swipe_next)
+            else context.getString(R.string.p3x_swipe_next_n, place)
+        )
+    }
 
     @SuppressLint("NotifyDataSetChanged")
     private fun onLikedChanged() {
@@ -186,6 +233,14 @@ class SongAdapter(
     override fun onAttachedToRecyclerView(recyclerView: MyRecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         LikedSongs.addListener(likedListener)
+        swipeCallback = SongSwipeCallback(
+            context,
+            { getSongList().getOrNull(it) },
+            { layoutType == LayoutType.LIST || layoutType == LayoutType.COMPACT_LIST },
+            ::p3xSwipeLike,
+            ::p3xSwipePlayNext,
+            { notifyItemChanged(it, true) }
+        ).also { it.attach(recyclerView) }
         if (folder) {
             prefs.registerOnSharedPreferenceChangeListener(this)
             showFileNames = prefs.getBooleanStrict("show_file_names", true)
@@ -195,6 +250,8 @@ class SongAdapter(
     override fun onDetachedFromRecyclerView(recyclerView: MyRecyclerView) {
         super.onDetachedFromRecyclerView(recyclerView)
         LikedSongs.removeListener(likedListener)
+        swipeCallback?.detach(recyclerView)
+        swipeCallback = null
         if (folder)
             prefs.unregisterOnSharedPreferenceChangeListener(this)
     }
@@ -254,9 +311,25 @@ class SongAdapter(
 
     override fun onMenu(item: MediaItem, popupMenu: PopupMenu) {
         popupMenu.inflate(R.menu.more_menu)
+        popupMenu.menu.findItem(R.id.set_ringtone)?.isVisible = true
+        popupMenu.menu.findItem(R.id.set_notification)?.isVisible = true
 
         popupMenu.setOnMenuItemClickListener { it1 ->
             when (it1.itemId) {
+                R.id.set_ringtone -> {
+                    org.akanework.gramophone.logic.RingtoneHelper.set(
+                        mainActivity, item, android.media.RingtoneManager.TYPE_RINGTONE
+                    )
+                    true
+                }
+
+                R.id.set_notification -> {
+                    org.akanework.gramophone.logic.RingtoneHelper.set(
+                        mainActivity, item, android.media.RingtoneManager.TYPE_NOTIFICATION
+                    )
+                    true
+                }
+
                 R.id.play_next -> {
                     val mediaController = mainActivity.getPlayer()
                     mediaController?.addMediaItem(
@@ -467,3 +540,4 @@ class SongAdapter(
         }
     }
 }
+private const val P3X_SWIPE_KEY = "p3x_swipe"

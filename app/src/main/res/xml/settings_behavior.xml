@@ -82,4 +82,42 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:layout="@layout/preference_category_md"
+        android:title="@string/p3x_cat_sounds">
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="p3x_pause_at_zero"
+            android:layout="@layout/preference_switch"
+            android:summary="@string/p3x_pref_pause_zero_summary"
+            android:title="@string/p3x_pref_pause_zero"
+            android:widgetLayout="@layout/preference_switch_widget"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="true"
+            android:key="p3x_resume_on_volume"
+            android:layout="@layout/preference_switch"
+            android:summary="@string/p3x_pref_resume_volume_summary"
+            android:title="@string/p3x_pref_resume_volume"
+            android:widgetLayout="@layout/preference_switch_widget"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="p3x_ringtone"
+            android:layout="@layout/preference_basic"
+            android:summary="@string/p3x_pref_ringtone_summary"
+            android:title="@string/p3x_pref_ringtone"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="p3x_notification"
+            android:layout="@layout/preference_basic"
+            android:summary="@string/p3x_pref_notification_summary"
+            android:title="@string/p3x_pref_notification"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

@@ -310,7 +310,8 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                 != android.media.AudioManager.STREAM_MUSIC) return
             val vol = intent.getIntExtra("android.media.EXTRA_VOLUME_STREAM_VALUE", -1)
             val prev = intent.getIntExtra("android.media.EXTRA_PREV_VOLUME_STREAM_VALUE", -1)
-            if (vol == 0 && prev != 0) {
+            val sp = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
+            if (vol == 0 && prev != 0 && sp.getBoolean("p3x_pause_at_zero", true)) {
                 controller?.let {
                     if (it.playWhenReady) {
                         pausedByVolume = true
@@ -318,7 +319,9 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                         it.pause()
                     }
                 }
-            } else if (vol > 0 && prev == 0 && pausedByVolume) {
+            } else if (vol > 0 && prev == 0 && pausedByVolume &&
+                sp.getBoolean("p3x_resume_on_volume", true)
+            ) {
                 pausedByVolume = false
                 volumeActionAt = android.os.SystemClock.elapsedRealtime()
                 controller?.let { if (!it.playWhenReady) it.play() }

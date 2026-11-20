@@ -22,9 +22,14 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.SwitchPreferenceCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.akanework.gramophone.R
+import org.akanework.gramophone.logic.gramophoneApplication
 import org.akanework.gramophone.logic.hasImagePermission
 import org.akanework.gramophone.logic.hasScopedStorageWithMediaTypes
 import org.akanework.gramophone.logic.utils.Flags
@@ -54,9 +59,36 @@ class BehaviorSettingsFragment : BasePreferenceFragment() {
         setPreferencesFromResource(R.xml.settings_behavior, rootKey)
     }
 
+    /** Shows the library as a list and sets the chosen song as ringtone / notification sound. */
+    private fun p3xPickSong(type: Int) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val songs = requireContext().gramophoneApplication.reader.songListFlow.first()
+                .sortedBy { it.mediaMetadata.title?.toString()?.lowercase() ?: "" }
+            if (songs.isEmpty()) return@launch
+            val names = songs.map {
+                val artist = it.mediaMetadata.artist?.toString()
+                (it.mediaMetadata.title?.toString() ?: "?") + if (artist.isNullOrEmpty()) "" else " - $artist"
+            }.toTypedArray()
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.p3x_pick_song)
+                .setItems(names) { _, i ->
+                    org.akanework.gramophone.logic.RingtoneHelper.set(requireActivity(), songs[i], type)
+                }
+                .show()
+        }
+    }
+
     override fun onPreferenceTreeClick(preference: Preference): Boolean {
         if (preference.key == "blacklist") {
             startActivity(BlacklistSettingsActivity::class.java)
+        }
+        if (preference.key == "p3x_ringtone") {
+            p3xPickSong(android.media.RingtoneManager.TYPE_RINGTONE)
+            return true
+        }
+        if (preference.key == "p3x_notification") {
+            p3xPickSong(android.media.RingtoneManager.TYPE_NOTIFICATION)
+            return true
         }
         // Prior to Android 13, this changes a setting which changes MediaStoreUtils behaviour
         // Android 13 and later, this displays state of images permission granted/denied

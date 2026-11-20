@@ -76,4 +76,11 @@
         android:summary="@string/settings_about_gramophone"
         android:title="@string/settings_about_app" />
 
+    <Preference
+        android:icon="@drawable/ic_info"
+        android:key="p3x_tutorial"
+        android:layout="@layout/preference_basic"
+        android:summary="@string/p3x_pref_tutorial_summary"
+        android:title="@string/p3x_pref_tutorial" />
+
 </PreferenceScreen>

@@ -28,4 +28,20 @@
     <item
         android:id="@+id/share"
         android:title="@string/share" />
+    <item
+        android:id="@+id/set_ringtone"
+        android:title="@string/p3x_set_ringtone"
+        android:visible="false" />
+    <item
+        android:id="@+id/set_notification"
+        android:title="@string/p3x_set_notification"
+        android:visible="false" />
+    <item
+        android:id="@+id/change_cover"
+        android:title="@string/p3x_change_cover"
+        android:visible="false" />
+    <item
+        android:id="@+id/reset_cover"
+        android:title="@string/p3x_reset_cover"
+        android:visible="false" />
 </menu>

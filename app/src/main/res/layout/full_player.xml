@@ -201,6 +201,20 @@
         </FrameLayout>
 
         <ImageView
+            android:id="@+id/p3x_add"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="4dp"
+            android:contentDescription="@string/p3x_add_to_playlist"
+            android:padding="11dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/p3x_add"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@android:color/white" />
+
+        <ImageView
             android:id="@+id/p3x_heart"
             android:layout_width="48dp"
             android:layout_height="48dp"
