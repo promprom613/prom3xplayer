@@ -64,6 +64,7 @@ object SettingsPrewarm {
                         // class missing or not loadable here, not important
                     }
                 }
+                P3xArtCache.trim(app)
                 for (id in xmls) {
                     try {
                         val parser = app.resources.getXml(id)

@@ -23,8 +23,7 @@
             android:layout_height="52dp"
             android:importantForAccessibility="no"
             android:scaleType="fitCenter"
-            app:srcCompat="@drawable/ic_launcher_foreground"
-            app:tint="?attr/colorOnSecondaryContainer" />
+            app:srcCompat="@drawable/p3x_icon_fg" />
 
     </com.google.android.material.card.MaterialCardView>
 

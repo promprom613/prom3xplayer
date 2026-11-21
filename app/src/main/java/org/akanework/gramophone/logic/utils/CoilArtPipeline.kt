@@ -64,6 +64,8 @@ import org.nift4.mediastorecompat.MediaStoreCompat
 import org.nift4.mediastorecompat.StorageManagerCompat
 import uk.akane.libphonograph.utils.MiscUtils
 import java.io.File
+import okio.Path.Companion.toOkioPath
+import org.akanework.gramophone.logic.P3xArtCache
 import java.io.IOException
 import java.util.Locale
 import kotlin.math.min
@@ -299,6 +301,14 @@ object CoilArtPipeline {
             imageLoader: ImageLoader
         ): Fetcher {
             return Fetcher {
+                val artCache = P3xArtCache.fileFor(options.context, data.id, data.songFile)
+                if (artCache != null && artCache.length() > 0) {
+                    return@Fetcher SourceFetchResult(
+                        source = ImageSource(artCache.toOkioPath(), options.fileSystem),
+                        mimeType = null,
+                        dataSource = DataSource.DISK,
+                    )
+                }
                 val uri = ContentUris.withAppendedId(MediaStore.Audio.Media
                     .EXTERNAL_CONTENT_URI, data.id)
                 MediaStoreCompat.openAssetFileDescriptor(options.context,
@@ -315,6 +325,7 @@ object CoilArtPipeline {
                                 afd.length
                             )
                         retriever.embeddedPicture?.let { raw ->
+                            if (artCache != null) P3xArtCache.put(artCache, raw)
                             return@Fetcher SourceFetchResult(
                                 source = ImageSource(
                                     Buffer().write(raw),

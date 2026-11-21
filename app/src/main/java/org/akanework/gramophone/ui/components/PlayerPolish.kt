@@ -50,9 +50,20 @@ import kotlin.math.abs
 
 /** Tiny blurred copy of cover art, shared by the full player and the mini player. */
 object ArtBlur {
+    // finished blurred pictures by cover, so skipping back to a song costs nothing
+    private val cache = android.util.LruCache<String, Bitmap>(64)
+
+    private fun drawableOf(ctx: Context, b: Bitmap): Drawable =
+        BitmapDrawable(ctx.resources, b).also { it.setFilterBitmap(true) }
+
     fun load(ctx: Context, uri: Any?, onDone: (Drawable?) -> Unit): Disposable? {
         if (uri == null) {
             onDone(null)
+            return null
+        }
+        val key = uri.toString()
+        cache.get(key)?.let {
+            onDone(drawableOf(ctx, it))
             return null
         }
         return ctx.imageLoader.enqueue(
@@ -65,9 +76,9 @@ object ArtBlur {
                 target(onSuccess = {
                     val src = (it.asDrawable(ctx.resources) as? BitmapDrawable)?.bitmap
                     if (src != null) {
-                        val d = BitmapDrawable(ctx.resources, blur(src))
-                        d.setFilterBitmap(true)
-                        onDone(d)
+                        val blurred = blur(src)
+                        cache.put(key, blurred)
+                        onDone(drawableOf(ctx, blurred))
                     } else {
                         onDone(null)
                     }

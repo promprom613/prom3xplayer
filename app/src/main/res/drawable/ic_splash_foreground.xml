@@ -1,10 +1,2 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="1024"
-    android:viewportHeight="1024">
-    <path
-        android:strokeColor="@color/splash_foreground_color"
-        android:strokeWidth="42.6"
-        android:pathData="M307.26,324.38 L307.26,700.31 A65.16,65.16 0 0 0 404.78,756.86 L733.27,568.90 A65.16,65.16 0 0 0 733.27,455.79 L404.78,267.82 A65.16,65.16 0 0 0 307.26,324.38 Z" />
-</vector>
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/p3x_icon_fg" />

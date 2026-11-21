@@ -33,19 +33,26 @@ object PlaylistCovers {
     private fun fileFor(context: Context, id: Long) = File(dir(context), "$id.jpg")
 
     /** Uri of the custom cover for the playlist with this id, or null when it has none. */
+    // looked-up answers, so scrolling the playlist list does not touch the disk for every row
+    private val memo = HashMap<Long, Uri?>()
+
+    @Synchronized
     fun uriFor(context: Context, id: Long?): Uri? {
         if (id == null) return null
+        if (memo.containsKey(id)) return memo[id]
         val f = fileFor(context, id)
-        if (!f.exists()) return null
-        return Uri.fromFile(f).buildUpon()
+        val uri = if (!f.exists()) null else Uri.fromFile(f).buildUpon()
             .appendQueryParameter("v", f.lastModified().toString()).build()
+        memo[id] = uri
+        return uri
     }
 
-    fun hasCover(context: Context, id: Long?): Boolean =
-        id != null && fileFor(context, id).exists()
+    fun hasCover(context: Context, id: Long?): Boolean = uriFor(context, id) != null
 
+    @Synchronized
     fun reset(context: Context, id: Long) {
         fileFor(context, id).delete()
+        memo.remove(id)
     }
 
     /** Copies [source] into a square, downscaled jpeg. Returns false if the image is unusable. */
@@ -73,6 +80,7 @@ object PlaylistCovers {
             fileFor(context, id).outputStream().use {
                 scaled.compress(Bitmap.CompressFormat.JPEG, 90, it)
             }
+            synchronized(this) { memo.remove(id) }
             true
         } catch (e: Exception) {
             false

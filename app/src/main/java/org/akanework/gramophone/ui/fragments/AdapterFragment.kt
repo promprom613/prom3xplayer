@@ -89,6 +89,7 @@ class AdapterFragment : BaseFragment(null) {
         recyclerView.enableEdgeToEdgePaddingListener()
         adapter = createAdapter(savedInstanceState)
         recyclerView.adapter = adapter.concatAdapter
+        recyclerView.setItemViewCacheSize(8) // keep rows just scrolled past, no rebinding when scrolling back
         recyclerView.setAppBar((requireParentFragment() as ViewPagerFragment).appBarLayout)
         recyclerView.fastScroll(adapter, adapter.itemHeightHelper)
         (adapter as? RequestAdapter)?.let { it1 ->

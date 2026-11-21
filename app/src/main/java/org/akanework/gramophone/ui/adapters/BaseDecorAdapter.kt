@@ -109,29 +109,16 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         if (frame.tag != STICKY_TAG) return
         val v = android.view.LayoutInflater.from(rv.context)
             .inflate(R.layout.general_decor, frame, false)
-        val hasBgImage = try {
-            androidx.preference.PreferenceManager.getDefaultSharedPreferences(rv.context)
-                .getString("main_bg_uri", null) != null
-        } catch (_: Throwable) {
-            false
-        }
-        if (hasBgImage) {
-            v.background = android.graphics.drawable.GradientDrawable(
-                android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(0xE6000000.toInt(), 0x00000000)
-            )
-        } else {
-            v.setBackgroundColor(
-                MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
-            )
-        }
         v.layoutParams = FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, dpHeight, Gravity.TOP
-        ).also { it.rightMargin = (12 * rv.resources.displayMetrics.density).toInt() }
-        v.setPadding(rv.paddingLeft, 0, rv.paddingRight, 0)
+        )
         v.translationY = rv.paddingTop.toFloat()
         v.visibility = View.INVISIBLE
-        v.isClickable = true // swallow stray touches so the list below does not scroll under it
+        // Swallow stray touches so the list below does not scroll under the bar, but let the thin
+        // right strip through: that is where the fast scroll handle lives.
+        val strip = (12 * rv.resources.displayMetrics.density).toInt()
+        v.setOnTouchListener { view, e -> e.x <= view.width - strip && e.y <= dpHeight }
+        applyStickyLook(v, rv)
         val h = ViewHolder(v)
         frame.addView(v)
         stickyView = v
@@ -150,6 +137,33 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         rv.addOnLayoutChangeListener(ll)
     }
 
+    /**
+     * Full-width bar. Over the library background picture it is a dark fade with a soft tail
+     * (no hard edge), otherwise a plain surface colored bar.
+     */
+    private fun applyStickyLook(v: View, rv: RecyclerView) {
+        val density = rv.resources.displayMetrics.density
+        val bg = rv.rootView?.findViewById<android.widget.ImageView>(R.id.main_bg_image)
+        val hasImage = bg != null && bg.visibility == View.VISIBLE && bg.drawable != null
+        val extra = if (hasImage) (20 * density).toInt() else 0
+        if (hasImage) {
+            v.background = android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(0xF2000000.toInt(), 0xD9000000.toInt(), 0x00000000)
+            )
+        } else {
+            v.setBackgroundColor(
+                MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
+            )
+        }
+        v.setPadding(rv.paddingLeft, 0, rv.paddingRight, extra)
+        val lp = v.layoutParams
+        if (lp != null && lp.height != dpHeight + extra) {
+            lp.height = dpHeight + extra
+            v.layoutParams = lp
+        }
+    }
+
     private fun updateSticky() {
         val rv = recyclerView ?: return
         val v = stickyView ?: return
@@ -165,7 +179,10 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         val a = (scrolled / (28f * density)).coerceIn(0f, 1f)
         val vis = if (a > 0f) View.VISIBLE else View.INVISIBLE
         if (v.visibility != vis) {
-            if (a > 0f) stickyHolder?.let { bindDecor(it) }
+            if (a > 0f) {
+                applyStickyLook(v, rv)
+                stickyHolder?.let { bindDecor(it) }
+            }
             v.visibility = vis
         }
         if (v.alpha != a) v.alpha = a

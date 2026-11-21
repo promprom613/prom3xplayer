@@ -937,11 +937,23 @@ class FullBottomSheet
         val job = CoroutineScope(Dispatchers.Default)
         currentJob = job
         val mediaItem = instance?.currentMediaItem
+        val colorCacheKey = mediaItem?.mediaMetadata?.artworkUri?.let {
+            "$it|" + prefs.getBoolean("color_accuracy", false)
+        }
         job.launch {
             if (viewModel.lastBitmapUri?.equals(mediaItem?.mediaMetadata?.artworkUri) == true) {
                 wrappedContext = makeWrappedContext(context,
                     viewModel.lastDynamicColorsOptions!!)
                 applyColorScheme(false)
+                return@launch
+            }
+            val cachedOptions = colorCacheKey?.let { P3xColorCache.map.get(it) }
+            if (cachedOptions != null) {
+                // this cover was already analysed, skip the expensive color computation
+                viewModel.lastBitmapUri = mediaItem?.mediaMetadata?.artworkUri
+                viewModel.lastDynamicColorsOptions = cachedOptions
+                wrappedContext = makeWrappedContext(context, cachedOptions)
+                applyColorScheme()
                 return@launch
             }
             currentDisposable = context.imageLoader.enqueue(
@@ -967,6 +979,7 @@ class FullBottomSheet
                                     .build() // <-- this is computationally expensive!
                             viewModel.lastBitmapUri = mediaItem?.mediaMetadata?.artworkUri
                             viewModel.lastDynamicColorsOptions = options
+                            colorCacheKey?.let { P3xColorCache.map.put(it, options) }
 
                             wrappedContext = makeWrappedContext(context, options)
                             applyColorScheme()
@@ -1741,4 +1754,9 @@ class FullBottomSheet
         var lastDynamicColorsOptions: DynamicColorsOptions? = null
     }
 
+}
+
+/** Color schemes already computed from covers, the computation is expensive on old phones. */
+private object P3xColorCache {
+    val map = android.util.LruCache<String, DynamicColorsOptions>(32)
 }
