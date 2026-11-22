@@ -29,7 +29,7 @@
                 app:icon="@drawable/ic_arrow_back"
                 app:iconGravity="textStart"
                 app:iconPadding="8dp"
-                app:iconSize="24dp"
+                app:iconSize="64dp"
                 app:iconTint="?attr/colorOnSurface" />
 
             <EditText

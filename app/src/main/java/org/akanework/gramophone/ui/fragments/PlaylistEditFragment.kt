@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui.fragments
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ContentUris
@@ -135,7 +137,7 @@ class PlaylistEditFragment : BaseFragment(false) {
             }.first()
             if (item == null || item.path == null) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(
+                    P3xToast.makeText(
                         requireContext(),
                         R.string.unknown_playlist,
                         Toast.LENGTH_LONG
@@ -179,7 +181,7 @@ class PlaylistEditFragment : BaseFragment(false) {
                                     } catch (e: Exception) {
                                         Log.e(TAG, "failed to discard", e)
                                         withContext(Dispatchers.Main) {
-                                            Toast.makeText(
+                                            P3xToast.makeText(
                                                 requireContext(),
                                                 R.string.mount_storage,
                                                 Toast.LENGTH_LONG
@@ -203,7 +205,7 @@ class PlaylistEditFragment : BaseFragment(false) {
                 }
                 else -> {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(
+                        P3xToast.makeText(
                             requireContext(), R.string.mount_storage,
                             Toast.LENGTH_LONG
                         ).show()
@@ -225,7 +227,7 @@ class PlaylistEditFragment : BaseFragment(false) {
                 } catch (e: Exception) {
                     Log.e(TAG, "failed to restore changes", e)
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(
+                        P3xToast.makeText(
                             requireContext(), context.getString(
                                 R.string.failed_to_restore, e.message),
                             Toast.LENGTH_LONG).show()
@@ -236,7 +238,7 @@ class PlaylistEditFragment : BaseFragment(false) {
         } catch (e: Exception) {
             Log.e(TAG, "failed to read changes", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), e.toString(),
+                P3xToast.makeText(requireContext(), e.toString(),
                     Toast.LENGTH_LONG).show()
                 requireActivity().supportFragmentManager.popBackStack()
             }
@@ -355,7 +357,7 @@ class PlaylistEditFragment : BaseFragment(false) {
                 } catch (e: Exception) {
                     Log.e(TAG, "failed to write changes", e)
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(requireContext(), e.toString(),
+                        P3xToast.makeText(requireContext(), e.toString(),
                             Toast.LENGTH_LONG).show()
                         requireActivity().supportFragmentManager.popBackStack()
                     }
@@ -393,7 +395,7 @@ class PlaylistEditFragment : BaseFragment(false) {
                     } catch (e: Exception) {
                         Log.e(TAG, "failed to discard", e)
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(requireContext(),
+                            P3xToast.makeText(requireContext(),
                                 R.string.mount_storage,
                                 Toast.LENGTH_LONG).show()
                         }
@@ -416,7 +418,7 @@ class PlaylistEditFragment : BaseFragment(false) {
             } catch (e: Exception) {
                 Log.e("PlaylistEditFragment", "failed to edit $uri", e)
                 lifecycleScope.launch(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), context.getString(R
+                    P3xToast.makeText(requireContext(), context.getString(R
                         .string.edit_playlist_failed, e.message),
                         Toast.LENGTH_LONG).show()
                     doneEditing = false // allow user to save again to try again
@@ -429,7 +431,7 @@ class PlaylistEditFragment : BaseFragment(false) {
                 } catch (e: Exception) {
                     Log.e(TAG, "failed to discard", e)
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(requireContext(), R.string.mount_storage,
+                        P3xToast.makeText(requireContext(), R.string.mount_storage,
                             Toast.LENGTH_LONG).show()
                     }
                 }
@@ -466,7 +468,7 @@ class PlaylistEditFragment : BaseFragment(false) {
         val filesDir = context.externalCacheDir
         if (filesDir == null) {
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), R.string.mount_storage,
+                P3xToast.makeText(requireContext(), R.string.mount_storage,
                     Toast.LENGTH_LONG).show()
             }
             return

@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.NotificationManager
@@ -278,6 +280,8 @@ class MainActivity : BaseActivity() {
                     ),
                 PERMISSION_READ_MEDIA_AUDIO,
             )
+            // never keep the splash up while the permission dialog is open
+            handler.postDelayed(reportFullyDrawnRunnable, 600)
         } else {
             // If all permissions are granted, we can update library now.
             if (!this@MainActivity.reader.hadFirstRefresh) {
@@ -294,7 +298,7 @@ class MainActivity : BaseActivity() {
     fun addToPlaylistDialog(item: MediaItem) {
         val song = Entry.ofMediaItem(item)
         if (song == null) {
-            Toast.makeText(
+            P3xToast.makeText(
                 this@MainActivity,
                 getString(R.string.edit_playlist_failed, "song == null"),
                 Toast.LENGTH_LONG
@@ -463,7 +467,7 @@ class MainActivity : BaseActivity() {
             } catch (e: Exception) {
                 Log.e("MainActivity", Log.getThrowableString(e)!!)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(
+                    P3xToast.makeText(
                         this@MainActivity,
                         getString(
                             R.string.edit_favorites_failed,
@@ -475,7 +479,7 @@ class MainActivity : BaseActivity() {
             }
         } else {
             withContext(Dispatchers.Main) {
-                Toast.makeText(
+                P3xToast.makeText(
                     this@MainActivity,
                     getString(R.string.edit_favorites_failed, "$resultCode"),
                     Toast.LENGTH_LONG
@@ -502,7 +506,7 @@ class MainActivity : BaseActivity() {
             } catch (e: Exception) {
                 Log.e("MainActivity", Log.getThrowableString(e)!!)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(
+                    P3xToast.makeText(
                         this@MainActivity,
                         getString(
                             errorString,
@@ -514,7 +518,7 @@ class MainActivity : BaseActivity() {
             }
         } else {
             withContext(Dispatchers.Main) {
-                Toast.makeText(
+                P3xToast.makeText(
                     this@MainActivity,
                     getString(errorString, "$resultCode"),
                     Toast.LENGTH_LONG
@@ -578,7 +582,7 @@ class MainActivity : BaseActivity() {
                             controller.prepare()
                             controller.play()
                         } else {
-                            Toast.makeText(
+                            P3xToast.makeText(
                                 this@MainActivity,
                                 R.string.cannot_find_file,
                                 Toast.LENGTH_LONG
@@ -828,10 +832,10 @@ class MainActivity : BaseActivity() {
             if (grantResults.isNotEmpty() &&
                 grantResults[0] == PackageManager.PERMISSION_GRANTED
             ) {
-                updateLibrary()
+                updateLibrary(then = { recreate() }) // fresh start, same as re-opening the app
             } else {
                 maybeReportFullyDrawn() // TODO: is this still needed?
-                Toast.makeText(this, getString(R.string.grant_audio), Toast.LENGTH_LONG).show()
+                P3xToast.makeText(this, getString(R.string.grant_audio), Toast.LENGTH_LONG).show()
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 intent.setData("package:$packageName".toUri())
                 startActivity(intent)
@@ -934,7 +938,7 @@ class MainActivity : BaseActivity() {
                 val ok = withContext(Dispatchers.IO) {
                     org.akanework.gramophone.logic.PlaylistCovers.save(this@MainActivity, id, uri)
                 }
-                Toast.makeText(
+                P3xToast.makeText(
                     this@MainActivity,
                     if (ok) R.string.p3x_cover_saved else R.string.p3x_cover_failed,
                     Toast.LENGTH_SHORT
@@ -949,7 +953,7 @@ class MainActivity : BaseActivity() {
         try {
             p3xPickCover.launch("image/*")
         } catch (e: Exception) {
-            Toast.makeText(this, R.string.p3x_cover_failed, Toast.LENGTH_SHORT).show()
+            P3xToast.makeText(this, R.string.p3x_cover_failed, Toast.LENGTH_SHORT).show()
         }
     }
 

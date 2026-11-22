@@ -99,6 +99,40 @@ class AdapterFragment : BaseFragment(null) {
                         ?: throw IllegalStateException("pendingRequest null, why?"))
                 }
         }
+        val pl = adapter
+        if (pl is PlaylistAdapter) {
+            val d = resources.displayMetrics.density
+            val plus = android.widget.ImageButton(inflater.context).apply {
+                setImageResource(R.drawable.outline_add_24)
+                scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+                imageTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE)
+                val p = (30 * d).toInt()
+                setPadding(p, p, p, p)
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(0x33FFFFFF)
+                    cornerRadius = 44 * d
+                    setStroke((2 * d).toInt(), 0x99FFFFFF.toInt())
+                }
+                contentDescription = getString(R.string.create_playlist)
+                visibility = View.GONE
+                setOnClickListener { pl.p3xCreatePlaylist() }
+            }
+            rootView.addView(
+                plus, android.widget.FrameLayout.LayoutParams(
+                    (128 * d).toInt(), (128 * d).toInt(), android.view.Gravity.CENTER
+                )
+            )
+            val upd = {
+                plus.visibility =
+                    if (pl.p3xLoaded() && pl.itemCountForDecor == 0) View.VISIBLE else View.GONE
+            }
+            pl.concatAdapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+                override fun onChanged() = upd()
+                override fun onItemRangeInserted(positionStart: Int, itemCount: Int) = upd()
+                override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) = upd()
+            })
+            upd()
+        }
         return rootView
     }
 

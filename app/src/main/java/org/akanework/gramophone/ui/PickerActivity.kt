@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -121,7 +123,7 @@ abstract class PickerActivity<T : Any> : BaseActivity() {
                     gramophoneApplication.reader.refresh()
                 }
             } else {
-                Toast.makeText(this, getString(R.string.grant_audio), Toast.LENGTH_LONG).show()
+                P3xToast.makeText(this, getString(R.string.grant_audio), Toast.LENGTH_LONG).show()
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 intent.setData("package:$packageName".toUri())
                 startActivity(intent)

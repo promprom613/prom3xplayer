@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -321,7 +323,7 @@ class AudioPreviewActivity : BaseActivity(), View.OnClickListener {
                 handleIntent(intent)
             } else {
                 askedForPermissionInSettings = true
-                Toast.makeText(this, getString(R.string.grant_audio), Toast.LENGTH_LONG).show()
+                P3xToast.makeText(this, getString(R.string.grant_audio), Toast.LENGTH_LONG).show()
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 intent.setData("package:$packageName".toUri())
                 startActivity(intent)
@@ -473,7 +475,7 @@ class AudioPreviewActivity : BaseActivity(), View.OnClickListener {
                         } catch (e: IllegalStateException) {
                             if (e.message?.startsWith("No suitable media source factory found for content type:") != true)
                                 throw e
-                            Toast.makeText(
+                            P3xToast.makeText(
                                 this@AudioPreviewActivity,
                                 R.string.cannot_play_file,
                                 Toast.LENGTH_LONG

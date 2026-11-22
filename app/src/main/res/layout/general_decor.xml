@@ -38,7 +38,7 @@
             app:icon="@drawable/outline_add_24"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="26dp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/create_playlist"
             tools:visibility="visible" />
@@ -57,7 +57,7 @@
             app:icon="@drawable/ic_play_arrow"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="26dp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/play_all"
             tools:visibility="visible" />
@@ -76,7 +76,7 @@
             app:icon="@drawable/ic_shuffle"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="22dp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/shuffle_all"
             tools:visibility="visible" />
@@ -94,7 +94,7 @@
             app:icon="@drawable/ic_sort"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24dp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/sort" />
 
@@ -112,7 +112,7 @@
             app:icon="@drawable/ic_search"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24dp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="Search"
             tools:visibility="visible" />
@@ -131,7 +131,7 @@
             app:icon="@drawable/ic_more_vert_alt"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24dp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="More"
             tools:visibility="visible" />
@@ -150,7 +150,7 @@
             app:icon="@drawable/baseline_arrow_upward_24"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24dp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/scroll_to_albums"
             tools:visibility="visible" />
@@ -169,7 +169,7 @@
             app:icon="@drawable/baseline_arrow_downward_24"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24dp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/scroll_to_songs"
             tools:visibility="visible" />

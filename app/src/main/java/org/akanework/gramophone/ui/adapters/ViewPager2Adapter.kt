@@ -71,7 +71,7 @@ class ViewPager2Adapter(
             viewPager2.setCurrentItem(newPosition, false)
         }
 
-        viewPager2.isUserInputEnabled = getItemCount() >= 2
+        viewPager2.isUserInputEnabled = false
         onTabsChanged?.invoke()
     }
 

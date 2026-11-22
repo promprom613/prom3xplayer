@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui.components
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.util.AttributeSet
@@ -31,7 +33,7 @@ class NoAppFallbackPreference(context: Context, attrs: AttributeSet) : Preferenc
                 try {
                     context.startActivity(it)
                 } catch (_: ActivityNotFoundException) {
-                    Toast.makeText(context, R.string.no_app_found, Toast.LENGTH_LONG).show()
+                    P3xToast.makeText(context, R.string.no_app_found, Toast.LENGTH_LONG).show()
                 }
             } != null
         }

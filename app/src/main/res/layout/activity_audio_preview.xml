@@ -82,7 +82,7 @@
         app:icon="@drawable/play_anim"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="24dp"
+        app:iconSize="48dp"
         app:iconTint="?attr/colorOnSecondaryContainer"
         app:layout_constraintBottom_toBottomOf="@id/coverCardView"
         app:layout_constraintEnd_toEndOf="parent"

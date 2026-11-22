@@ -14,7 +14,7 @@ object RingtoneHelper {
     /** [type] is [RingtoneManager.TYPE_RINGTONE] or [RingtoneManager.TYPE_NOTIFICATION]. */
     fun set(activity: Activity, item: MediaItem, type: Int) {
         if (!Settings.System.canWrite(activity)) {
-            Toast.makeText(activity, R.string.p3x_need_write_settings, Toast.LENGTH_LONG).show()
+            P3xToast.makeText(activity, R.string.p3x_need_write_settings, Toast.LENGTH_LONG).show()
             try {
                 activity.startActivity(
                     Intent(
@@ -30,14 +30,14 @@ object RingtoneHelper {
         val title = item.mediaMetadata.title?.toString() ?: ""
         val uri = item.requestMetadata.mediaUri ?: item.localConfiguration?.uri
         if (uri == null) {
-            Toast.makeText(
+            P3xToast.makeText(
                 activity, activity.getString(R.string.p3x_sound_failed, title), Toast.LENGTH_LONG
             ).show()
             return
         }
         try {
             RingtoneManager.setActualDefaultRingtoneUri(activity, type, uri)
-            Toast.makeText(
+            P3xToast.makeText(
                 activity,
                 activity.getString(
                     if (type == RingtoneManager.TYPE_RINGTONE) R.string.p3x_ringtone_done
@@ -46,7 +46,7 @@ object RingtoneHelper {
                 Toast.LENGTH_SHORT
             ).show()
         } catch (e: Exception) {
-            Toast.makeText(
+            P3xToast.makeText(
                 activity, activity.getString(R.string.p3x_sound_failed, title), Toast.LENGTH_LONG
             ).show()
         }

@@ -113,6 +113,7 @@ import org.akanework.gramophone.R
 import org.akanework.gramophone.logic.GramophonePlaybackService
 import org.akanework.gramophone.logic.Haptics
 import org.akanework.gramophone.logic.LikedSongs
+import org.akanework.gramophone.logic.p3xPop
 import org.akanework.gramophone.logic.clone
 import org.akanework.gramophone.logic.dpToPx
 import org.akanework.gramophone.logic.fadInAnimation
@@ -305,6 +306,10 @@ class FullBottomSheet
         bottomSheetPlaybackSpeedButton = findViewById(R.id.playback_speed)
         bottomSheetFavoriteButton = findViewById(R.id.favor)
         p3xHeart = findViewById(R.id.p3x_heart)
+        listOf(bottomSheetShuffleButton, bottomSheetLoopButton, bottomSheetFavoriteButton,
+            bottomSheetTimerButton).forEach { b ->
+            b.addOnCheckedChangeListener { v, _ -> v.p3xPop() }
+        }
         p3xTitleBase = bottomSheetFullTitle.textColors.defaultColor
         p3xHeart?.setOnClickListener { p3xToggleLike() }
         p3xAdd = findViewById(R.id.p3x_add)
@@ -1669,6 +1674,7 @@ class FullBottomSheet
                         R.drawable.ic_pause_filled
                     )
                 bottomSheetFullControllerButton.setTag(R.id.play_next, 1)
+                bottomSheetFullControllerButton.p3xPop()
             }
             if (!isUserTracking) {
                 progressDrawable.animate = true
@@ -1686,6 +1692,7 @@ class FullBottomSheet
                         R.drawable.ic_play_arrow_filled
                     )
                 bottomSheetFullControllerButton.setTag(R.id.play_next, 2)
+                bottomSheetFullControllerButton.p3xPop()
                 bottomSheetFullCover.stopRotation()
             }
             if (!isUserTracking) {

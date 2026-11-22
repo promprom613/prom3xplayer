@@ -86,9 +86,29 @@
         android:padding="12dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/more"
+        app:layout_constraintEnd_toStartOf="@id/p3x_play"
         app:layout_constraintTop_toTopOf="parent"
         app:tint="?attr/colorOnSurface" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/p3x_play"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/rp_buttons"
+        android:contentDescription="@string/shuffle"
+        android:insetLeft="0dp"
+        android:insetTop="0dp"
+        android:insetRight="0dp"
+        android:insetBottom="0dp"
+        android:visibility="gone"
+        app:icon="@drawable/ic_play_arrow"
+        app:iconGravity="textStart"
+        app:iconPadding="0dp"
+        app:iconSize="48dp"
+        app:iconTint="?attr/colorOnSurface"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/more"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/more"
@@ -104,7 +124,7 @@
         app:icon="@drawable/ic_more_vert_alt"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="24dp"
+        app:iconSize="48dp"
         app:iconTint="?attr/colorOnSurface"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

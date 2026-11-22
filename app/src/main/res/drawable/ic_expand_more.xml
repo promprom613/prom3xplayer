@@ -2,9 +2,7 @@
     android:width="24dp"
     android:height="24dp"
     android:tint="?attr/colorOnSurface"
-    android:viewportWidth="960"
-    android:viewportHeight="960">
-    <path
-        android:fillColor="@android:color/white"
-        android:pathData="M480,615L240,375L296,319L480,503L664,319L720,375L480,615Z" />
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path android:pathData="M6,9.5 L12,15.5 L18,9.5" android:strokeColor="@android:color/white" android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000" />
 </vector>

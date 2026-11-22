@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui.fragments.settings
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
@@ -102,7 +104,7 @@ class ContributorsSettingsActivity : BaseComposeActivity() {
                     try {
                         startActivity(intent)
                     } catch (_: ActivityNotFoundException) {
-                        Toast.makeText(this, R.string.no_app_found, Toast.LENGTH_LONG).show()
+                        P3xToast.makeText(this, R.string.no_app_found, Toast.LENGTH_LONG).show()
                     }
                 }
             }

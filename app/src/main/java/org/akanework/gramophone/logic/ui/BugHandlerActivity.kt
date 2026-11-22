@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.logic.ui
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -196,7 +198,7 @@ class BugHandlerActivity : BaseActivity() {
             clipboard.setPrimaryClip(clip)
         }
         if (!hasOsClipboardDialog()) {
-            Toast.makeText(this, R.string.crash_clipboard, Toast.LENGTH_LONG).show()
+            P3xToast.makeText(this, R.string.crash_clipboard, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -270,7 +272,7 @@ class BugHandlerActivity : BaseActivity() {
                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             })
                         } catch (_: ActivityNotFoundException) {
-                            Toast.makeText(
+                            P3xToast.makeText(
                                 this@BugHandlerActivity,
                                 R.string.send_email_manually,
                                 Toast.LENGTH_LONG
@@ -284,7 +286,7 @@ class BugHandlerActivity : BaseActivity() {
                             allowDiskAccessInStrictMode {
                                 clipboard.setPrimaryClip(clip)
                             }
-                            Toast.makeText(
+                            P3xToast.makeText(
                                 this@BugHandlerActivity,
                                 R.string.email_clipboard,
                                 Toast.LENGTH_LONG

@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui.adapters
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.net.Uri
@@ -172,11 +174,11 @@ class SongAdapter(
 
     private val likedListener: () -> Unit = { onLikedChanged() }
     private var swipeCallback: SongSwipeCallback? = null
-    private var swipeToast: Toast? = null
+    private var swipeToast: P3xToast? = null
 
     private fun p3xToast(text: String) {
         swipeToast?.cancel()
-        swipeToast = Toast.makeText(context, text, Toast.LENGTH_SHORT).also { it.show() }
+        swipeToast = P3xToast.makeText(context, text, Toast.LENGTH_SHORT).also { it.show() }
     }
 
     /** Swipe left: like (or unlike when it already is liked). */
@@ -420,7 +422,7 @@ class SongAdapter(
                             .setChooserTitle("Share audio file")
                             .startChooser()
                     } catch (e: Exception) {
-                        Toast.makeText(
+                        P3xToast.makeText(
                             mainActivity,
                             "Unable to share: ${e.message}",
                             Toast.LENGTH_SHORT

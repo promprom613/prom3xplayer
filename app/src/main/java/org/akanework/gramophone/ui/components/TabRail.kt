@@ -27,7 +27,7 @@ class TabRail @JvmOverloads constructor(
 
     private val d = resources.displayMetrics.density
     private val buttonSize = (40 * d).toInt()
-    private val pad = (9 * d).toInt()
+    private val pad = (4 * d).toInt()
     private val tabButtons = ArrayList<ImageView>()
     private val circles = ArrayList<GradientDrawable>()
     private var selected = -1

@@ -1379,4 +1379,8 @@ supporting local search. This string is displayed in the search bar when using G
     <string name="p3x_pref_scroll_titles">Scrolling song names</string>
     <string name="p3x_pref_scroll_titles_summary">Long song names scroll sideways in the lists, like in the player. May use a bit more battery.</string>
     <string name="p3x_power_off">Turn everything off</string>
+    <plurals name="p3x_playlists">
+        <item quantity="one">%d Playlist</item>
+        <item quantity="other">%d Playlists</item>
+    </plurals>
 </resources>

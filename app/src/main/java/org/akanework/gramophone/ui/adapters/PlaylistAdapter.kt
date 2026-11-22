@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui.adapters
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.app.Activity
 import android.content.ContentResolver
 import android.content.ContentUris
@@ -49,6 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.akanework.gramophone.R
 import org.akanework.gramophone.logic.gramophoneApplication
+import org.akanework.gramophone.logic.setMediaItemsWithTitle
 import org.akanework.gramophone.logic.ui.MyRecyclerView
 import org.akanework.gramophone.ui.PlaylistPickerActivity
 import org.akanework.gramophone.ui.fragments.AdapterFragment
@@ -78,6 +81,8 @@ class PlaylistAdapter(
                 it.map { playlistsList ->
                     playlistsList.filter { p -> p.id != null && p.path != null }
                 }
+            else if (fragment != null && isSubFragment == null)
+                it.map { l -> l.filter { p -> p !is RecentlyAdded && p !is Favorite } }
             else it
         },
     sortHelper = StorePlaylistHelper,
@@ -205,7 +210,7 @@ class PlaylistAdapter(
 
                 R.id.delete -> {
                     if (item.id == null) {
-                        Toast.makeText(
+                        P3xToast.makeText(
                             context, context.getString(
                                 R.string.delete_failed_playlist, "item.id == null"
                             ),
@@ -239,7 +244,7 @@ class PlaylistAdapter(
 
                 R.id.rename -> {
                     if (item.id == null) {
-                        Toast.makeText(
+                        P3xToast.makeText(
                             context,
                             context.getString(R.string.rename_failed_playlist, "$item"),
                             Toast.LENGTH_LONG
@@ -301,7 +306,7 @@ class PlaylistAdapter(
                 } catch (e: Exception) {
                     Log.e("PlaylistAdapter", Log.getThrowableString(e)!!)
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(
+                        P3xToast.makeText(
                             context, context.getString(
                                 R.string.rename_failed_playlist, e.javaClass.name + ": " + e.message
                             ),
@@ -311,7 +316,7 @@ class PlaylistAdapter(
                 }
             }
         } else {
-            Toast.makeText(
+            P3xToast.makeText(
                 context, context.getString(
                     R.string.rename_failed_playlist,
                     "$resultCode"
@@ -327,9 +332,37 @@ class PlaylistAdapter(
         return PlaylistDecorAdapter(this)
     }
 
+    fun p3xCreatePlaylist() {
+        playlistNameDialog(context, R.string.create_playlist, "",
+            { ItemManipulator.getDefaultPlaylistFile(it) }) { path ->
+            ioScope.launch {
+                try {
+                    val uri = ItemManipulator.createPlaylist(context, path)
+                    ItemManipulator.setPlaylistContent(context, uri,
+                        PlaylistSerializer.Playlist.create(), true)
+                } catch (e: Exception) {
+                    Log.e("PlaylistAdapter", Log.getThrowableString(e)!!)
+                }
+            }
+        }
+    }
+
+    override fun hasPlayButton(item: Playlist) = fragment != null && item.songList.isNotEmpty()
+
+    override fun onPlayButton(item: Playlist) {
+        val controller = mainActivity.getPlayer() ?: return
+        controller.setMediaItemsWithTitle(
+            item.songList,
+            title = item.title ?: virtualTitleOf(item),
+            shuffleEnabled = true,
+        )
+        controller.prepare()
+        controller.play()
+    }
+
     private inner class PlaylistDecorAdapter(
         playlistAdapter: PlaylistAdapter
-    ) : BaseDecorAdapter<PlaylistAdapter>(playlistAdapter, R.plurals.items) {
+    ) : BaseDecorAdapter<PlaylistAdapter>(playlistAdapter, R.plurals.p3x_playlists) {
 
         override fun onBindViewHolder(
             holder: ViewHolder,
@@ -349,7 +382,7 @@ class PlaylistAdapter(
                         } catch (e: Exception) {
                             Log.e("PlaylistAdapter", Log.getThrowableString(e)!!)
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(
+                                P3xToast.makeText(
                                     context, context.getString(
                                         R.string.create_failed_playlist,
                                         e.javaClass.name + ": " + e.message

@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui.components
 
+import org.akanework.gramophone.logic.p3xPop
+
 import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -195,10 +197,12 @@ class PreviewBottomSheet(
         if (instance?.isPlaying == true && myTag != 1) {
             bottomSheetPreviewControllerButton.icon =
                 AppCompatResources.getDrawable(context, R.drawable.ic_pause_filled)
+            bottomSheetPreviewControllerButton.p3xPop()
             bottomSheetPreviewControllerButton.setTag(R.id.play_next, 1)
         } else if (instance?.isPlaying == false && myTag != 2) {
             bottomSheetPreviewControllerButton.icon =
                 AppCompatResources.getDrawable(context, R.drawable.ic_play_arrow_filled)
+            bottomSheetPreviewControllerButton.p3xPop()
             bottomSheetPreviewControllerButton.setTag(R.id.play_next, 2)
         }
     }

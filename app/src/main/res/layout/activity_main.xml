@@ -75,7 +75,7 @@
         app:icon="@drawable/ic_play_arrow_filled"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="40dp"
+        app:iconSize="72dp"
         app:iconTint="#FF000000" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

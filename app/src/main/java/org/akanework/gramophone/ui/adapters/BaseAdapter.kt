@@ -303,9 +303,16 @@ abstract class BaseAdapter<T : Any>(
         val subTitle: TextView = view.findViewById(R.id.artist)
         val trackCount: TextView? = view.findViewById(R.id.track_count)
         val moreButton: MaterialButton? = view.findViewById(R.id.more)
+        val playButton: MaterialButton? = view.findViewById(R.id.p3x_play)
         val defaultTitleColors: android.content.res.ColorStateList = title.textColors
         var titleColored = false
     }
+
+    fun p3xLoaded() = list != null
+
+    /** Playlist rows have a small play (shuffle) button next to the menu button. */
+    protected open fun hasPlayButton(item: T): Boolean = false
+    protected open fun onPlayButton(item: T) {}
 
     /** Return a color to override the title color of [item], or null for the default. */
     protected open fun titleColorOf(item: T): Int? = null
@@ -397,6 +404,15 @@ abstract class BaseAdapter<T : Any>(
             holder.titleColored = false
         }
         holder.subTitle.text = subTitleOf(item)
+        holder.playButton?.let { b ->
+            if (hasPlayButton(item)) {
+                b.visibility = View.VISIBLE
+                b.setOnClickListener { onPlayButton(item) }
+            } else {
+                b.visibility = View.GONE
+                b.setOnClickListener(null)
+            }
+        }
         holder.songCover.load(coverOf(item)) {
             placeholderScaleToFit(defaultCover)
             crossfade(true)

@@ -20,7 +20,7 @@
         app:icon="@drawable/ic_expand_more"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="28dp"
+        app:iconSize="52dp"
         app:iconTint="?attr/colorOnSurface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -38,7 +38,7 @@
         app:icon="@drawable/ic_speed"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="24dp"
+        app:iconSize="52dp"
         app:iconTint="?attr/colorOnSurface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -59,7 +59,7 @@
         app:icon="@drawable/sl_check_timer"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="24dp"
+        app:iconSize="52dp"
         app:iconTint="?attr/colorOnSurface"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -255,8 +255,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_mid_button"
-            android:layout_width="90dp"
-            android:layout_height="90dp"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="18dp"
             android:background="@drawable/bg_play_anim"
@@ -269,7 +269,7 @@
             app:icon="@drawable/play_anim"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="42dp"
+            app:iconSize="72dp"
             app:iconTint="?attr/colorPrimary"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -279,8 +279,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_previous_song"
-            android:layout_width="90dp"
-            android:layout_height="90dp"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:layout_gravity="center"
             android:layout_marginEnd="8dp"
             android:layout_toStartOf="@id/sheet_mid_button"
@@ -293,7 +293,7 @@
             app:icon="@drawable/ic_skip_previous"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="38sp"
+            app:iconSize="72dp"
             app:iconTint="?attr/colorOnSurface"
             app:layout_constraintBottom_toBottomOf="@id/sheet_mid_button"
             app:layout_constraintEnd_toStartOf="@id/sheet_mid_button"
@@ -304,8 +304,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_next_song"
-            android:layout_width="90dp"
-            android:layout_height="90dp"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
             android:layout_gravity="center"
             android:layout_marginStart="8dp"
             android:layout_toEndOf="@id/sheet_mid_button"
@@ -318,7 +318,7 @@
             app:icon="@drawable/ic_skip_next"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="38sp"
+            app:iconSize="72dp"
             app:iconTint="?attr/colorOnSurface"
             app:layout_constraintBottom_toBottomOf="@id/sheet_mid_button"
             app:layout_constraintEnd_toEndOf="parent"
@@ -358,7 +358,7 @@
             app:icon="@drawable/ic_article"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24sp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorOnSurface"
             app:tooltipText="@string/dialog_lyrics" />
 
@@ -378,7 +378,7 @@
             app:icon="@drawable/ic_repeat"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24sp"
+            app:iconSize="48dp"
             app:iconTint="@color/sl_check_button"
             app:tooltipText="@string/repeat_mode" />
 
@@ -398,7 +398,7 @@
             app:icon="@drawable/ic_shuffle"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24sp"
+            app:iconSize="48dp"
             app:iconTint="@color/sl_check_button"
             app:tooltipText="@string/shuffle" />
 
@@ -418,7 +418,7 @@
             app:icon="@drawable/sl_check_fav"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24sp"
+            app:iconSize="48dp"
             app:iconTint="@color/sl_fav_button"
             app:tooltipText="@string/playlist_favourite" />
 
@@ -436,7 +436,7 @@
             app:icon="@drawable/ic_playlist_play"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="24dp"
+            app:iconSize="48dp"
             app:iconTint="?attr/colorOnSurface"
             app:tooltipText="@string/current_playlist" />
     </LinearLayout>

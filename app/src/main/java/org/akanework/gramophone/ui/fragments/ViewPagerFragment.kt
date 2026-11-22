@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui.fragments
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.media.audiofx.AudioEffect
@@ -129,7 +131,7 @@ class ViewPagerFragment : BaseFragment(true) {
                         }
                     } catch (_: ActivityNotFoundException) {
                         // Let's show a toast here if no system inbuilt EQ was found.
-                        Toast.makeText(
+                        P3xToast.makeText(
                             requireContext(),
                             R.string.equalizer_not_found,
                             Toast.LENGTH_LONG
@@ -159,7 +161,7 @@ class ViewPagerFragment : BaseFragment(true) {
                         .setMessage(R.string.refresh_did_you_know)
                         .setPositiveButton(android.R.string.ok) { _, _ -> }
                         .show()
-                    Toast.makeText(context, R.string.refreshing_wait, Toast.LENGTH_LONG).show()
+                    P3xToast.makeText(context, R.string.refreshing_wait, Toast.LENGTH_LONG).show()
                     CoroutineScope(Dispatchers.Default).launch {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             SdScanner.scanEverything(context, 5000) { progress ->
@@ -173,7 +175,7 @@ class ViewPagerFragment : BaseFragment(true) {
                                         "${progress.percentage}%"
                                     )
                                     CoroutineScope(Dispatchers.Main).launch {
-                                        Toast.makeText(context, str, Toast.LENGTH_SHORT).show()
+                                        P3xToast.makeText(context, str, Toast.LENGTH_SHORT).show()
                                     }
                                     return@scanEverything
                                 }
@@ -190,7 +192,7 @@ class ViewPagerFragment : BaseFragment(true) {
                             while (!job.isCompleted) {
                                 delay(5000)
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    Toast.makeText(context, context.getString(
+                                    P3xToast.makeText(context, context.getString(
                                         R.string.refreshing_wait),
                                         Toast.LENGTH_SHORT).show()
                                 }
@@ -279,7 +281,7 @@ class ViewPagerFragment : BaseFragment(true) {
             }
         })
 
-        viewPager2.isUserInputEnabled = adapter.itemCount >= 2
+        viewPager2.isUserInputEnabled = false // the rail is the only way to switch tabs
 
         return rootView
     }

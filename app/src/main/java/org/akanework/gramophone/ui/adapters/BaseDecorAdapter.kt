@@ -223,6 +223,19 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
             pm.show()
         }
         holder.counter.text = context.resources.getQuantityString(pluralStr, count, count)
+        val totalMs = when (adapter) {
+            is SongAdapter -> adapter.getSongList().sumOf { it.mediaMetadata.durationMs ?: 0L }
+            is AlbumAdapter -> adapter.getAlbumList().sumOf { a ->
+                a.songList.sumOf { it.mediaMetadata.durationMs ?: 0L }
+            }
+            else -> 0L
+        }
+        if (totalMs >= 60_000L) {
+            val h = totalMs / 3_600_000L
+            val m = (totalMs / 60_000L) % 60
+            holder.counter.text = holder.counter.text.toString() + " · " +
+                    (if (h > 0) "%dh%02dmin".format(h, m) else "%dmin".format(m))
+        }
         if (adapter is SongAdapter) {
             holder.counter.setOnClickListener {
                 goToPlayingSong()

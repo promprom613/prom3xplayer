@@ -17,6 +17,8 @@
 
 package org.akanework.gramophone.ui.fragments.settings
 
+import org.akanework.gramophone.logic.P3xToast
+
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -94,7 +96,7 @@ class BehaviorSettingsFragment : BasePreferenceFragment() {
         // Android 13 and later, this displays state of images permission granted/denied
         if (hasScopedStorageWithMediaTypes() && !Flags.REMOVE_IMAGE_PERMISSION &&
             preference.key == "album_covers") {
-            Toast.makeText(
+            P3xToast.makeText(
                 requireActivity(), if (requireContext().hasImagePermission())
                     R.string.deny_images else R.string.grant_images, Toast.LENGTH_LONG
             ).show()
