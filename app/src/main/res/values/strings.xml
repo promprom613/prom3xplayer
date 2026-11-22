@@ -1337,8 +1337,6 @@ supporting local search. This string is displayed in the search bar when using G
     <string name="p3x_cover_saved">Cover updated</string>
     <string name="p3x_cover_failed">Could not use that image</string>
     <string name="p3x_add_to_playlist">Add to playlist</string>
-    <string name="p3x_swipe_liked">Liked</string>
-    <string name="p3x_swipe_unliked">Removed from liked</string>
     <string name="p3x_swipe_next">Plays next</string>
     <string name="p3x_swipe_next_n">Plays next, number %1$d in line</string>
     <string name="p3x_pref_tutorial">Tutorial</string>
@@ -1349,7 +1347,7 @@ supporting local search. This string is displayed in the search bar when using G
     <string name="p3x_tut_1_title">Welcome to prom3xplayer</string>
     <string name="p3x_tut_1_body">A light, fast, ad-free music player. This short tour shows every gesture and hidden trick. Swipe sideways to continue. You can replay it any time from Settings, Tutorial.</string>
     <string name="p3x_tut_2_title">Your library tabs</string>
-    <string name="p3x_tut_2_body">Songs, Albums, Artists, Genres, Dates, Folders and Playlists live in the tabs at the top. Tap a tab, or swipe sideways between them. Tip: start the swipe at the very edge of the screen, because swiping on a song does something else (see the swipe page).</string>
+    <string name="p3x_tut_2_body">Songs, Albums, Artists, Genres, Dates, Folders and Playlists live in the little floating bar on the right side of the screen. Tap an icon to switch, or swipe sideways between them. Tip: start the swipe at the very edge of the screen, because swiping on a song does something else (see the swipe page). The power button at the bottom of the bar is a full off switch: it stops the music, turns shuffle off, clears the notification and closes the app.</string>
     <string name="p3x_tut_3_title">The song counter</string>
     <string name="p3x_tut_3_body">Tap the counter above the list (for example \"125 Songs\") and the list jumps straight to the song that is playing right now.</string>
     <string name="p3x_tut_4_title">Search, sort and the menu</string>
@@ -1357,7 +1355,7 @@ supporting local search. This string is displayed in the search bar when using G
     <string name="p3x_tut_5_title">Play a song, open its menu</string>
     <string name="p3x_tut_5_body">Tap a song to play it. Long-press it (or tap its three dots) for more: play next, add to queue, go to album or artist, add to playlist, details, share, set as ringtone or notification sound, and delete.</string>
     <string name="p3x_tut_6_title">Swipe songs</string>
-    <string name="p3x_tut_6_body">Swipe a song LEFT to like it, and its title turns pink. Swipe it RIGHT to play it next. Swipe several songs right and they line up in the order you swiped, like an instant play-next list.</string>
+    <string name="p3x_tut_6_body">Swipe a song LEFT to like it, and its title turns pink. Swipe it RIGHT to play it next, and its title turns blue while it waits in line. Swipe several songs right and they line up in the order you swiped, like an instant play-next list.</string>
     <string name="p3x_tut_7_title">The mini player</string>
     <string name="p3x_tut_7_body">The bar at the bottom shows what is playing. Tap it, or swipe it up, to open the full player. Swipe it left for the next song and right for the previous one. Long-press its play button to stop and clear the queue.</string>
     <string name="p3x_tut_8_title">The full player</string>
@@ -1378,4 +1376,7 @@ supporting local search. This string is displayed in the search bar when using G
     <string name="p3x_tut_15_body">Long-press any song and choose Set as ringtone or Set as notification sound. You can also do it from Settings, Behavior, Sounds. Android asks once to allow modifying system settings.</string>
     <string name="p3x_tut_16_title">Make it yours</string>
     <string name="p3x_tut_16_body">Settings has themes including pure black, lyrics options, audio effects, library filters and more. Replay this tour any time from Settings, Tutorial. Enjoy the music!</string>
+    <string name="p3x_pref_scroll_titles">Scrolling song names</string>
+    <string name="p3x_pref_scroll_titles_summary">Long song names scroll sideways in the lists, like in the player. May use a bit more battery.</string>
+    <string name="p3x_power_off">Turn everything off</string>
 </resources>

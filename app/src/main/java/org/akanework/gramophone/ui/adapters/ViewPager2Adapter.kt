@@ -71,15 +71,11 @@ class ViewPager2Adapter(
             viewPager2.setCurrentItem(newPosition, false)
         }
 
-        val tabLayout = (context as? MainActivity)?.findViewById<TabLayout>(R.id.tab_layout)
-        if (getItemCount() < 2) {
-            tabLayout?.visibility = View.GONE
-            viewPager2.isUserInputEnabled = false
-        } else {
-            tabLayout?.visibility = View.VISIBLE
-            viewPager2.isUserInputEnabled = true
-        }
+        viewPager2.isUserInputEnabled = getItemCount() >= 2
+        onTabsChanged?.invoke()
     }
+
+    var onTabsChanged: (() -> Unit)? = null
 
     fun getLabelResId(position: Int) = tabs[position]!!.label
 

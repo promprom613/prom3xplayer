@@ -187,7 +187,6 @@ class SongAdapter(
         org.akanework.gramophone.logic.Haptics.tick(context)
         LikedSongs.setLocal(song.mediaId, nowLiked)
         mainActivity.markIsFavoriteStatus(listOf(entry), nowLiked)
-        p3xToast(context.getString(if (nowLiked) R.string.p3x_swipe_liked else R.string.p3x_swipe_unliked))
     }
 
     /** Swipe right: play next. Songs swiped one after another line up in swipe order. */
@@ -228,11 +227,20 @@ class SongAdapter(
     }
 
     override fun titleColorOf(item: MediaItem): Int? =
-        if (LikedSongs.isLiked(item.mediaId)) LikedSongs.PINK else null
+        if (org.akanework.gramophone.logic.PendingNext.isPending(item.mediaId))
+            org.akanework.gramophone.logic.PendingNext.BLUE
+        else if (LikedSongs.isLiked(item.mediaId)) LikedSongs.PINK else null
+
+    private val pendingListener: (Set<String>) -> Unit = { changed ->
+        getSongList().forEachIndexed { i, s ->
+            if (changed.contains(s.mediaId)) notifyItemChanged(i)
+        }
+    }
 
     override fun onAttachedToRecyclerView(recyclerView: MyRecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         LikedSongs.addListener(likedListener)
+        org.akanework.gramophone.logic.PendingNext.addListener(pendingListener)
         swipeCallback = SongSwipeCallback(
             context,
             { getSongList().getOrNull(it) },
@@ -250,6 +258,7 @@ class SongAdapter(
     override fun onDetachedFromRecyclerView(recyclerView: MyRecyclerView) {
         super.onDetachedFromRecyclerView(recyclerView)
         LikedSongs.removeListener(likedListener)
+        org.akanework.gramophone.logic.PendingNext.removeListener(pendingListener)
         swipeCallback?.detach(recyclerView)
         swipeCallback = null
         if (folder)

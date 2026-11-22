@@ -119,6 +119,17 @@ abstract class BaseAdapter<T : Any>(
     protected var list: Pair<List<T>, List<T>>? = null
     protected var recyclerView: MyRecyclerView? = null
         private set
+    private var p3xMarquee = prefs0().getBoolean("p3x_scroll_titles", false)
+    private val p3xMarqueeListener = object :
+        android.content.SharedPreferences.OnSharedPreferenceChangeListener {
+        override fun onSharedPreferenceChanged(sp: android.content.SharedPreferences, key: String?) {
+            if (key == "p3x_scroll_titles") {
+                p3xMarquee = sp.getBoolean(key, false)
+                notifyDataSetChanged()
+            }
+        }
+    }
+    private fun prefs0() = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
 
     protected val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
 
@@ -302,6 +313,7 @@ abstract class BaseAdapter<T : Any>(
     override fun onAttachedToRecyclerView(recyclerView: MyRecyclerView) {
         super.onAttachedToRecyclerView(recyclerView)
         this.recyclerView = recyclerView
+        prefs0().registerOnSharedPreferenceChangeListener(p3xMarqueeListener)
         if (list != null) {
             recyclerView.doOnLayout {
                 recyclerView.postOnAnimation { reportFullyDrawn() }
@@ -311,6 +323,7 @@ abstract class BaseAdapter<T : Any>(
 
     override fun onDetachedFromRecyclerView(recyclerView: MyRecyclerView) {
         super.onDetachedFromRecyclerView(recyclerView)
+        prefs0().unregisterOnSharedPreferenceChangeListener(p3xMarqueeListener)
         this.recyclerView = null
     }
 
@@ -367,6 +380,14 @@ abstract class BaseAdapter<T : Any>(
             }
         }
         holder.title.text = titleOf(item) ?: virtualTitleOf(item)
+        if (p3xMarquee) {
+            holder.title.ellipsize = android.text.TextUtils.TruncateAt.MARQUEE
+            holder.title.marqueeRepeatLimit = -1
+            holder.title.isSelected = true
+        } else if (holder.title.isSelected) {
+            holder.title.ellipsize = android.text.TextUtils.TruncateAt.END
+            holder.title.isSelected = false
+        }
         val titleColor = titleColorOf(item)
         if (titleColor != null) {
             holder.title.setTextColor(titleColor)

@@ -41,25 +41,6 @@
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tab_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            app:tabBackground="@android:color/transparent"
-            app:tabGravity="start"
-            app:tabIndicator="@drawable/selected_chip_background"
-            app:tabIndicatorColor="?colorSecondaryContainer"
-            app:tabIndicatorFullWidth="true"
-            app:tabIndicatorGravity="stretch"
-            app:tabMinWidth="0dp"
-            app:tabMode="scrollable"
-            app:tabPaddingEnd="12dp"
-            app:tabPaddingStart="12dp"
-            app:tabRippleColor="@android:color/transparent"
-            app:tabSelectedTextColor="?colorOnSecondaryContainer"
-            app:tabTextAppearance="@style/TabTextAppearance"
-            app:tabTextColor="?attr/colorOnSurfaceVariant" />
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -69,5 +50,12 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <org.akanework.gramophone.ui.components.TabRail
+        android:id="@+id/p3x_rail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="52dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -111,7 +111,7 @@
         android:layout_marginTop="18dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="18dp"
-        android:background="@drawable/bg_circle_soft"
+        android:background="@drawable/bg_flat_ripple"
         android:contentDescription="@string/play"
         android:insetLeft="0dp"
         android:insetTop="0dp"

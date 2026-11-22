@@ -1194,7 +1194,7 @@ class FullBottomSheet
 
             val onSecondaryContainerTransition = ValueAnimator.ofArgb(
                 bottomSheetFullControllerButton.iconTint.defaultColor,
-                colorOnSecondaryContainer
+                colorPrimary
             )
 
             val colorContrastFaintedTransition = ValueAnimator.ofArgb(
@@ -1405,7 +1405,7 @@ class FullBottomSheet
             bottomSheetFullControllerButton.backgroundTintList =
                 ColorStateList.valueOf(colorSecondaryContainer)
             bottomSheetFullControllerButton.iconTint =
-                ColorStateList.valueOf(colorOnSecondaryContainer)
+                ColorStateList.valueOf(colorPrimary)
 
             bottomSheetFullSlider.thumbTintList =
                 ColorStateList.valueOf(colorPrimary)

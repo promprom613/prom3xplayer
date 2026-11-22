@@ -39,8 +39,9 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayoutMediator
+import androidx.media3.session.SessionCommand
+import org.akanework.gramophone.logic.GramophonePlaybackService
+import org.akanework.gramophone.ui.components.TabRail
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -91,7 +92,6 @@ class ViewPagerFragment : BaseFragment(true) {
         savedInstanceState: Bundle?,
     ): View? {
         val rootView = inflater.inflate(R.layout.fragment_viewpager, container, false)
-        val tabLayout = rootView.findViewById<TabLayout>(R.id.tab_layout)
         val topAppBar = rootView.findViewById<MaterialToolbar>(R.id.topAppBar)
         viewPager2 = rootView.findViewById(R.id.fragment_viewpager)
 
@@ -237,48 +237,49 @@ class ViewPagerFragment : BaseFragment(true) {
             )
         viewPager2.adapter = adapter
 
-        TabLayoutMediator(tabLayout, viewPager2) { tab, position ->
-            tab.text = getString(adapter.getLabelResId(position))
-            tab.view.post {
-                try {
-                    /*
-                     * Add margin to last and first tab.
-                     * There's no attribute to let you set margin
-                     * to the last tab.
-                     */
-                    val lp = tab.view.layoutParams as ViewGroup.MarginLayoutParams
-                    lp.marginStart = if (position == 0)
-                        resources.getDimension(R.dimen.tab_layout_content_padding).toInt() else 0
-                    lp.marginEnd = if (position == tabLayout.tabCount - 1)
-                        resources.getDimension(R.dimen.tab_layout_content_padding).toInt() else 0
-                    tab.view.layoutParams = lp
-                } catch (_: IllegalStateException) {
-                }
+        val rail = rootView.findViewById<TabRail>(R.id.p3x_rail)
+        val rebuildRail = {
+            rail.setTabs(List(adapter.itemCount) { i ->
+                TabRail.Entry(
+                    TabRail.iconFor(adapter.getItemId(i).toInt()),
+                    adapter.getLabelResId(i)
+                )
+            })
+            rail.select(viewPager2.currentItem)
+        }
+        rail.onSelect = { pos ->
+            if (pos == viewPager2.currentItem) {
+                (childFragmentManager.findFragmentByTag("f${adapter.getItemId(pos)}")
+                        as AdapterFragment?)?.onTabReselected()
+            } else {
+                viewPager2.setCurrentItem(pos, true)
             }
-        }.attach()
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(p0: TabLayout.Tab?) {
-                // do nothing
+        }
+        rail.onPower = {
+            val activity = requireActivity() as MainActivity
+            val player = activity.getPlayer()
+            if (player == null) {
+                activity.finishAndRemoveTask()
+            } else {
+                val fut = player.sendCustomCommand(
+                    SessionCommand(GramophonePlaybackService.SERVICE_POWER_OFF, Bundle.EMPTY),
+                    Bundle.EMPTY
+                )
+                fut.addListener(
+                    { activity.finishAndRemoveTask() },
+                    androidx.core.content.ContextCompat.getMainExecutor(activity)
+                )
             }
-
-            override fun onTabUnselected(p0: TabLayout.Tab?) {
-                // do nothing
-            }
-
-            override fun onTabReselected(p0: TabLayout.Tab?) {
-                if (p0 != null)
-                    (childFragmentManager.findFragmentByTag("f${adapter.getItemId(p0.position)}")
-                            as AdapterFragment?)?.onTabReselected()
+        }
+        adapter.onTabsChanged = rebuildRail
+        rebuildRail()
+        viewPager2.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                rail.select(position)
             }
         })
 
-        if (adapter.itemCount < 2) {
-            tabLayout.visibility = View.GONE
-            viewPager2.isUserInputEnabled = false
-        } else {
-            tabLayout.visibility = View.VISIBLE
-            viewPager2.isUserInputEnabled = true
-        }
+        viewPager2.isUserInputEnabled = adapter.itemCount >= 2
 
         return rootView
     }

@@ -53,6 +53,8 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     private var prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     private var hostPager: org.akanework.gramophone.ui.fragments.ViewPagerFragment? = null
     private var stickyPending = false
+    private var stickyFailed = false
+    private var lastHasImage: Boolean? = null
     private var stickyView: View? = null
     private var stickyHolder: ViewHolder? = null
     private var stickyFrame: FrameLayout? = null
@@ -79,6 +81,9 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         bindDecor(holder)
+        // the real row is only a spacer, the pinned copy is the visible bar
+        holder.itemView.visibility =
+            if (hostPager != null && !stickyFailed) View.INVISIBLE else View.VISIBLE
         // keep the pinned copy in sync with the real row
         stickyHolder?.let { if (it !== holder) bindDecor(it) }
     }
@@ -99,8 +104,11 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     private fun createSticky(rv: RecyclerView) {
         try {
             createStickyUnsafe(rv)
+            if (stickyView == null) throw IllegalStateException("no sticky host")
         } catch (_: Throwable) {
             removeSticky()
+            stickyFailed = true
+            rv.findViewHolderForAdapterPosition(0)?.itemView?.visibility = View.VISIBLE
         }
     }
 
@@ -113,7 +121,7 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
             ViewGroup.LayoutParams.MATCH_PARENT, dpHeight, Gravity.TOP
         )
         v.translationY = rv.paddingTop.toFloat()
-        v.visibility = View.INVISIBLE
+        v.visibility = View.VISIBLE
         // Swallow stray touches so the list below does not scroll under the bar, but let the thin
         // right strip through: that is where the fast scroll handle lives.
         val strip = (12 * rv.resources.displayMetrics.density).toInt()
@@ -125,15 +133,8 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         stickyHolder = h
         stickyFrame = frame
         bindDecor(h)
-        val sl = object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                updateSticky()
-            }
-        }
         val ll = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateSticky() }
-        stickyScroll = sl
         stickyLayout = ll
-        rv.addOnScrollListener(sl)
         rv.addOnLayoutChangeListener(ll)
     }
 
@@ -145,17 +146,17 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         val density = rv.resources.displayMetrics.density
         val bg = rv.rootView?.findViewById<android.widget.ImageView>(R.id.main_bg_image)
         val hasImage = bg != null && bg.visibility == View.VISIBLE && bg.drawable != null
-        val extra = if (hasImage) (20 * density).toInt() else 0
-        if (hasImage) {
-            v.background = android.graphics.drawable.GradientDrawable(
-                android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-                intArrayOf(0xF2000000.toInt(), 0xD9000000.toInt(), 0x00000000)
+        val extra = (20 * density).toInt()
+        val base = if (hasImage) 0xFF000000.toInt() else
+            MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
+        v.background = android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(
+                androidx.core.graphics.ColorUtils.setAlphaComponent(base, 0xF2),
+                androidx.core.graphics.ColorUtils.setAlphaComponent(base, 0xD9),
+                androidx.core.graphics.ColorUtils.setAlphaComponent(base, 0x00)
             )
-        } else {
-            v.setBackgroundColor(
-                MaterialColors.getColor(v, com.google.android.material.R.attr.colorSurface)
-            )
-        }
+        )
         v.setPadding(rv.paddingLeft, 0, rv.paddingRight, extra)
         val lp = v.layoutParams
         if (lp != null && lp.height != dpHeight + extra) {
@@ -167,25 +168,14 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     private fun updateSticky() {
         val rv = recyclerView ?: return
         val v = stickyView ?: return
-        val first = rv.findViewHolderForAdapterPosition(0)
-        val density = rv.resources.displayMetrics.density
-        val scrolled = when {
-            rv.childCount == 0 -> 0f
-            first == null -> 1e6f // scrolled far away from the top
-            first !is ViewHolder -> 0f
-            else -> (rv.paddingTop - first.itemView.top).toFloat()
+        val hasImage = rv.rootView?.findViewById<android.widget.ImageView>(R.id.main_bg_image)
+            ?.let { it.visibility == View.VISIBLE && it.drawable != null } == true
+        if (hasImage != lastHasImage) {
+            lastHasImage = hasImage
+            applyStickyLook(v, rv)
         }
-        // fades in over the first few dp of scrolling instead of popping in
-        val a = (scrolled / (28f * density)).coerceIn(0f, 1f)
-        val vis = if (a > 0f) View.VISIBLE else View.INVISIBLE
-        if (v.visibility != vis) {
-            if (a > 0f) {
-                applyStickyLook(v, rv)
-                stickyHolder?.let { bindDecor(it) }
-            }
-            v.visibility = vis
-        }
-        if (v.alpha != a) v.alpha = a
+        if (v.visibility != View.VISIBLE) v.visibility = View.VISIBLE
+        if (v.alpha != 1f) v.alpha = 1f
         val ty = rv.paddingTop.toFloat()
         if (v.translationY != ty) v.translationY = ty
     }

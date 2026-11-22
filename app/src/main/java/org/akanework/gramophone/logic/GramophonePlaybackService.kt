@@ -175,6 +175,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         const val PENDING_INTENT_WIDGET_ID = 2
         const val PENDING_INTENT_FAVE_ID = 3
 
+        const val SERVICE_POWER_OFF = "p3x_power_off"
         const val SERVICE_SET_TIMER = "set_timer"
         const val SERVICE_QUERY_TIMER = "query_timer"
         const val SERVICE_GET_AUDIO_FORMAT = "get_audio_format"
@@ -911,6 +912,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
             handler.post { this.controller?.prepare() }
         }
         availableSessionCommands.add(SessionCommand.COMMAND_CODE_SESSION_SET_RATING)
+        availableSessionCommands.add(SessionCommand(SERVICE_POWER_OFF, Bundle.EMPTY))
         availableSessionCommands.add(SessionCommand(SERVICE_SET_TIMER, Bundle.EMPTY))
         availableSessionCommands.add(SessionCommand(SERVICE_QUERY_TIMER, Bundle.EMPTY))
         availableSessionCommands.add(SessionCommand(SERVICE_GET_LYRICS, Bundle.EMPTY))
@@ -1100,6 +1102,18 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
 
         return Futures.immediateFuture(
             when (customCommand.customAction) {
+                SERVICE_POWER_OFF -> {
+                    // literal off switch: pause, shuffle off, timers off, drop notification + service
+                    pausedByVolume = false
+                    timerDuration = null
+                    this.controller?.let {
+                        it.shuffleModeEnabled = false
+                        it.pause()
+                    }
+                    handler.post { pauseAllPlayersAndStopSelf() }
+                    SessionResult(SessionResult.RESULT_SUCCESS)
+                }
+
                 SERVICE_SET_TIMER -> {
                     // 0 = clear timer; 0 with pauseOnEnd true will pause on end of current song
                     val duration = customCommand.customExtras.getInt("duration")
@@ -1703,6 +1717,11 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
     override fun onEvents(player: Player, events: Player.Events) {
         super<Player.Listener>.onEvents(player, events)
         org.akanework.gramophone.ui.P3xPlayerWidget.onPlayerChanged(this)
+        if (events.containsAny(
+                Player.EVENT_TIMELINE_CHANGED, Player.EVENT_MEDIA_ITEM_TRANSITION,
+                Player.EVENT_POSITION_DISCONTINUITY
+            )
+        ) org.akanework.gramophone.logic.PendingNext.update(player)
         // if timeline changed, shuffle order is handled elsewhere instead (cloneAndInsert called by
         // ExoPlayer for common case and nextShuffleOrder for resumption case)
         if (events.contains(Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED)

@@ -87,6 +87,15 @@
         android:title="@string/p3x_cat_sounds">
 
         <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="p3x_scroll_titles"
+            android:layout="@layout/preference_switch"
+            android:summary="@string/p3x_pref_scroll_titles_summary"
+            android:title="@string/p3x_pref_scroll_titles"
+            android:widgetLayout="@layout/preference_switch_widget"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
             android:defaultValue="true"
             android:key="p3x_pause_at_zero"
             android:layout="@layout/preference_switch"
