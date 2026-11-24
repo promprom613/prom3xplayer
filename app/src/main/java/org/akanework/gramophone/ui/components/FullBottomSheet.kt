@@ -17,6 +17,7 @@
 
 package org.akanework.gramophone.ui.components
 
+import org.akanework.gramophone.logic.gramophoneApplication
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
@@ -275,6 +276,21 @@ class FullBottomSheet
     private val p3xAdd: android.widget.ImageView?
     private var p3xLiked = false
     private var p3xPendingUntil = 0L
+    private var p3xPlaylists: List<uk.akane.libphonograph.items.Playlist> = emptyList()
+
+    private fun p3xUpdatePlaylistLabel(item: MediaItem?) {
+        val tv = findViewById<android.widget.TextView>(R.id.p3x_in_playlist) ?: return
+        val id = item?.mediaId
+        val names = if (id == null) emptyList() else p3xPlaylists.filter { p ->
+            p !is uk.akane.libphonograph.dynamicitem.Favorite &&
+                    p !is uk.akane.libphonograph.dynamicitem.RecentlyAdded &&
+                    p.songList.any { it.mediaId == id }
+        }.map { it.title ?: "" }.filter { it.isNotEmpty() }
+        if (names.isEmpty()) tv.visibility = View.GONE else {
+            tv.text = names.first() + if (names.size > 1) " +${names.size - 1}" else ""
+            tv.visibility = View.VISIBLE
+        }
+    }
     private var p3xAnim: ValueAnimator? = null
     var p3xTitleBase: Int = 0
         private set
@@ -306,6 +322,16 @@ class FullBottomSheet
         bottomSheetPlaybackSpeedButton = findViewById(R.id.playback_speed)
         bottomSheetFavoriteButton = findViewById(R.id.favor)
         p3xHeart = findViewById(R.id.p3x_heart)
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            context.gramophoneApplication.reader.playlistListFlow.collect {
+                p3xPlaylists = it
+                p3xUpdatePlaylistLabel(instance?.currentMediaItem)
+            }
+        }
+        bottomSheetFullLyricView.background = android.graphics.drawable.GradientDrawable().apply {
+            setColor(0xE62A2A2A.toInt())
+            cornerRadius = 28 * resources.displayMetrics.density
+        }
         listOf(bottomSheetShuffleButton, bottomSheetLoopButton, bottomSheetFavoriteButton,
             bottomSheetTimerButton).forEach { b ->
             b.addOnCheckedChangeListener { v, _ -> v.p3xPop() }
@@ -1254,9 +1280,7 @@ class FullBottomSheet
                     setBackgroundColor(
                         animation.animatedValue as Int
                     )
-                    bottomSheetFullLyricView.setBackgroundColor(
-                        animation.animatedValue as Int
-                    )
+                    
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1398,7 +1422,7 @@ class FullBottomSheet
         currentJob = null
         postOnAnimation {
             setBackgroundColor(backgroundProcessedColor)
-            bottomSheetFullLyricView.setBackgroundColor(backgroundProcessedColor)
+            
             p3xTitleBase = colorPrimary
             p3xAdd?.imageTintList = ColorStateList.valueOf(colorPrimary)
             bottomSheetFullTitle.setTextColor(
@@ -1485,6 +1509,7 @@ class FullBottomSheet
     ) {
         p3xPendingUntil = 0L
         p3xSetLiked((mediaItem?.mediaMetadata?.userRating as? HeartRating)?.isHeart == true)
+        p3xUpdatePlaylistLabel(mediaItem)
         if (instance?.mediaItemCount != 0) {
             bottomSheetFullCover.dispose()
             bottomSheetFullCover.loadNoPlaceholder(mediaItem?.mediaMetadata?.artworkUri) {

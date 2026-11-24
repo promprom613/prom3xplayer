@@ -88,6 +88,15 @@ class ViewPagerFragment : BaseFragment(true) {
     private lateinit var viewPager2: ViewPager2
     private lateinit var adapter: ViewPager2Adapter
 
+    private var closeRef: (() -> Unit)? = null
+    private fun close() { closeRef?.invoke() }
+
+    override fun onDestroyView() {
+        org.akanework.gramophone.logic.P3xSearch.openBar = null
+        org.akanework.gramophone.logic.P3xSearch.query.value = ""
+        super.onDestroyView()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -271,6 +280,72 @@ class ViewPagerFragment : BaseFragment(true) {
                     { activity.finishAndRemoveTask() },
                     androidx.core.content.ContextCompat.getMainExecutor(activity)
                 )
+            }
+        }
+        run {
+            val d = resources.displayMetrics.density
+            val bar = android.widget.FrameLayout(requireContext()).apply {
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    setColor(0xF2161616.toInt()); cornerRadius = 28 * d
+                    setStroke((1 * d).toInt().coerceAtLeast(1), 0x33FFFFFF)
+                }
+                visibility = View.GONE
+                elevation = 8 * d
+            }
+            val edit = android.widget.EditText(requireContext()).apply {
+                hint = getString(R.string.search)
+                setHintTextColor(0x99FFFFFF.toInt()); setTextColor(0xFFFFFFFF.toInt())
+                background = null; isSingleLine = true
+                imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH
+                setPadding((20 * d).toInt(), 0, (20 * d).toInt(), 0)
+                textSize = 17f
+            }
+            bar.addView(edit, android.widget.FrameLayout.LayoutParams(-1, (52 * d).toInt()))
+            val lp = androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(-1, -2).apply {
+                gravity = android.view.Gravity.TOP
+                marginStart = (14 * d).toInt(); marginEnd = (14 * d).toInt()
+                topMargin = (30 * d).toInt()
+            }
+            (rootView as ViewGroup).addView(bar, lp)
+            var barOpen = false
+            var backCb: androidx.activity.OnBackPressedCallback? = null
+            val closeImpl: () -> Unit = {
+                barOpen = false
+                backCb?.isEnabled = false
+                org.akanework.gramophone.logic.P3xSearch.query.value = ""
+                val imm = requireContext().getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+                imm.hideSoftInputFromWindow(edit.windowToken, 0)
+                bar.animate().translationY(-bar.height - 60 * d).alpha(0f).setDuration(200)
+                    .withEndAction { bar.visibility = View.GONE }.start()
+            }
+            val back = object : androidx.activity.OnBackPressedCallback(false) {
+                override fun handleOnBackPressed() {
+                    closeImpl()
+                }
+            }
+            backCb = back
+            requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, back)
+            edit.addTextChangedListener(object : android.text.TextWatcher {
+                override fun afterTextChanged(s: android.text.Editable?) {
+                    org.akanework.gramophone.logic.P3xSearch.query.value = s?.toString() ?: ""
+                }
+                override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+                override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            })
+            org.akanework.gramophone.logic.P3xSearch.openBar = {
+                val songsIdx = (0 until adapter.itemCount).firstOrNull { adapter.getItemId(it).toInt() == R.id.songs }
+                if (songsIdx != null && songsIdx != viewPager2.currentItem) viewPager2.setCurrentItem(songsIdx, false)
+                if (!barOpen) {
+                    barOpen = true; back.isEnabled = true
+                    edit.setText("")
+                    bar.visibility = View.VISIBLE
+                    bar.alpha = 0f
+                    bar.translationY = -90 * d
+                    bar.animate().translationY(0f).alpha(1f).setDuration(220).start()
+                    edit.requestFocus()
+                    val imm = requireContext().getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+                    imm.showSoftInput(edit, 0)
+                }
             }
         }
         adapter.onTabsChanged = rebuildRail

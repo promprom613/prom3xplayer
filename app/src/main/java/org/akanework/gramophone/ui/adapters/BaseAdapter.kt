@@ -309,9 +309,11 @@ abstract class BaseAdapter<T : Any>(
     }
 
     fun p3xLoaded() = list != null
+    fun p3xReshuffle() { resortTrigger.value++ }
 
     /** Playlist rows have a small play (shuffle) button next to the menu button. */
     protected open fun hasPlayButton(item: T): Boolean = false
+    protected open fun hasLyrics(item: T): Boolean = false
     protected open fun onPlayButton(item: T) {}
 
     /** Return a color to override the title color of [item], or null for the default. */
@@ -387,6 +389,15 @@ abstract class BaseAdapter<T : Any>(
             }
         }
         holder.title.text = titleOf(item) ?: virtualTitleOf(item)
+        if (hasLyrics(item)) {
+            val sp = android.text.SpannableStringBuilder(holder.title.text).append(" ")
+            val dr = androidx.appcompat.content.res.AppCompatResources.getDrawable(context, R.drawable.p3x_l_badge)!!
+            val px = (13 * context.resources.displayMetrics.density).toInt()
+            dr.setBounds(0, 0, px, px)
+            sp.setSpan(android.text.style.ImageSpan(dr, android.text.style.ImageSpan.ALIGN_BASELINE),
+                sp.length - 1, sp.length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            holder.title.text = sp
+        }
         if (p3xMarquee) {
             holder.title.ellipsize = android.text.TextUtils.TruncateAt.MARQUEE
             holder.title.marqueeRepeatLimit = -1

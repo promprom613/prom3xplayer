@@ -17,6 +17,7 @@
 
 package org.akanework.gramophone.ui.adapters
 
+import org.akanework.gramophone.logic.getFile
 import android.content.Context
 import android.view.Gravity
 import android.view.MenuItem
@@ -54,6 +55,8 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
     private var hostPager: org.akanework.gramophone.ui.fragments.ViewPagerFragment? = null
     private var stickyPending = false
     private var stickyFailed = false
+    private var sizeKey = 0
+    private var sizeText = ""
     private var lastHasImage: Boolean? = null
     private var stickyView: View? = null
     private var stickyHolder: ViewHolder? = null
@@ -208,6 +211,8 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
         holder.search.visibility = if (topLevel) View.VISIBLE else View.GONE
         holder.more.visibility = if (topLevel) View.VISIBLE else View.GONE
         holder.search.setOnClickListener {
+            val open = org.akanework.gramophone.logic.P3xSearch.openBar
+            if (open != null) open() else
             (context as? org.akanework.gramophone.ui.MainActivity)?.startFragment(
                 org.akanework.gramophone.ui.fragments.SearchFragment()
             )
@@ -230,11 +235,27 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
             }
             else -> 0L
         }
+        if (adapter is SongAdapter) {
+            val songs = adapter.getSongList()
+            val key = songs.size * 31 + System.identityHashCode(songs)
+            if (key != sizeKey) {
+                sizeKey = key
+                sizeText = ""
+                Thread {
+                    var total = 0L
+                    for (s in songs) total += s.getFile()?.length() ?: 0L
+                    val gb = total / 1073741824.0
+                    val txt = if (gb >= 1.0) "%.1fGB".format(gb) else "%dMB".format(total / 1048576L)
+                    holder.counter.post { if (sizeKey == key) { sizeText = txt; bindDecor(holder) } }
+                }.start()
+            }
+        }
         if (totalMs >= 60_000L) {
             val h = totalMs / 3_600_000L
             val m = (totalMs / 60_000L) % 60
             holder.counter.text = holder.counter.text.toString() + " · " +
-                    (if (h > 0) "%dh%02dmin".format(h, m) else "%dmin".format(m))
+                    (if (h > 0) "%dh%02dmin".format(h, m) else "%dmin".format(m)) +
+                    (if (sizeText.isNotEmpty()) " · $sizeText" else "")
         }
         if (adapter is SongAdapter) {
             holder.counter.setOnClickListener {
@@ -307,6 +328,10 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
             }
 
             popupMenu.setOnMenuItemClickListener { menuItem ->
+                if (menuItem.itemId == R.id.random) {
+                    Sorter.randomSeed = System.nanoTime()
+                    adapter.p3xReshuffle()
+                }
                 when (menuItem.itemId) {
                     in buttonMap.keys -> {
                         if (!menuItem.isChecked) {

@@ -17,6 +17,9 @@
 
 package org.akanework.gramophone.ui.fragments
 
+import org.akanework.gramophone.ui.MainActivity
+import org.akanework.gramophone.logic.gramophoneApplication
+import kotlinx.coroutines.flow.combine
 import android.content.Context
 import android.content.IntentSender
 import android.os.Bundle
@@ -89,6 +92,54 @@ class AdapterFragment : BaseFragment(null) {
         recyclerView.enableEdgeToEdgePaddingListener()
         adapter = createAdapter(savedInstanceState)
         recyclerView.adapter = adapter.concatAdapter
+        run {
+            val d = resources.displayMetrics.density
+            val spinner = android.widget.ProgressBar(requireContext()).apply {
+                isIndeterminate = true
+                alpha = 0f
+                elevation = 6 * d
+                setBackgroundResource(R.drawable.p3x_pull_bg)
+                val pd = (6 * d).toInt()
+                setPadding(pd, pd, pd, pd)
+            }
+            rootView.addView(spinner, android.widget.FrameLayout.LayoutParams(
+                (40 * d).toInt(), (40 * d).toInt(), android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL))
+            spinner.translationY = -60 * d
+            var startY = 0f
+            var pull = 0f
+            var busy = false
+            val trigger = 72 * d
+            recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+                override fun onInterceptTouchEvent(rv: RecyclerView, e: android.view.MotionEvent): Boolean {
+                    when (e.actionMasked) {
+                        android.view.MotionEvent.ACTION_DOWN -> { startY = e.y; pull = 0f }
+                        android.view.MotionEvent.ACTION_MOVE -> if (!busy && !rv.canScrollVertically(-1)) {
+                            val dy = (e.y - startY) * 0.5f
+                            if (dy > 0f) {
+                                pull = dy.coerceAtMost(trigger * 1.4f)
+                                spinner.alpha = (pull / trigger).coerceIn(0f, 1f)
+                                spinner.translationY = -60 * d + pull
+                                spinner.rotation = pull * 3f
+                            }
+                        } else if (!busy) pull = 0f
+                        android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                            if (!busy && pull >= trigger) {
+                                busy = true
+                                spinner.animate().translationY(16 * d).alpha(1f).setDuration(150).start()
+                                (activity as? MainActivity)?.updateLibrary(smartScanFirst = true, then = {
+                                    spinner.animate().alpha(0f).translationY(-60 * d).setDuration(250)
+                                        .withEndAction { busy = false }.start()
+                                })
+                            } else if (!busy) {
+                                spinner.animate().alpha(0f).translationY(-60 * d).setDuration(200).start()
+                            }
+                            pull = 0f
+                        }
+                    }
+                    return false
+                }
+            })
+        }
         recyclerView.setItemViewCacheSize(8) // keep rows just scrolled past, no rebinding when scrolling back
         recyclerView.setAppBar((requireParentFragment() as ViewPagerFragment).appBarLayout)
         recyclerView.fastScroll(adapter, adapter.itemHeightHelper)
@@ -164,7 +215,20 @@ class AdapterFragment : BaseFragment(null) {
         val id = arguments?.getInt("ID", -1)
         val qTitle = getQueueTitle()
         return when (id) {
-            R.id.songs -> SongAdapter(this, qTitle)
+            R.id.songs -> SongAdapter(
+                this, qTitle,
+                songList = requireContext().gramophoneApplication.reader.songListFlow
+                    .combine(org.akanework.gramophone.logic.P3xSearch.query) { list, q ->
+                        if (list == null || q.isBlank()) list else {
+                            val needle = q.trim().lowercase()
+                            list.filter { m ->
+                                (m.mediaMetadata.title?.toString() ?: "").lowercase().contains(needle) ||
+                                (m.mediaMetadata.artist?.toString() ?: "").lowercase().contains(needle) ||
+                                (m.mediaMetadata.albumTitle?.toString() ?: "").lowercase().contains(needle)
+                            }
+                        }
+                    }
+            )
             R.id.albums -> AlbumAdapter(this, qTitle)
             R.id.artists -> ArtistAdapter(this)
             R.id.genres -> GenreAdapter(this)

@@ -59,6 +59,20 @@ constructor(
 
     override fun isFocused(): Boolean = true
 
+    private var lastLayout: android.text.Layout? = null
+
+    // a relayout (e.g. after pressing a button) silently stops the marquee: restart it once
+    override fun onDraw(canvas: android.graphics.Canvas) {
+        super.onDraw(canvas)
+        if (layout !== lastLayout) {
+            lastLayout = layout
+            post {
+                super.setSelected(false)
+                super.setSelected(true)
+            }
+        }
+    }
+
     override fun onFocusChanged(
         focused: Boolean,
         direction: Int,

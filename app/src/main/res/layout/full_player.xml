@@ -200,14 +200,28 @@
 
         </FrameLayout>
 
+        <TextView
+            android:id="@+id/p3x_in_playlist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="80dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#B3FFFFFF"
+            android:textSize="11sp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <ImageView
             android:id="@+id/p3x_add"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
             android:layout_marginStart="14dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="18dp"
             android:contentDescription="@string/p3x_add_to_playlist"
-            android:padding="11dp"
+            android:padding="15dp"
             android:scaleType="fitCenter"
             android:src="@drawable/p3x_add"
             app:layout_constraintStart_toStartOf="parent"
@@ -216,12 +230,12 @@
 
         <ImageView
             android:id="@+id/p3x_heart"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginTop="4dp"
+            android:layout_width="65dp"
+            android:layout_height="65dp"
+            android:layout_marginTop="18dp"
             android:layout_marginEnd="14dp"
             android:contentDescription="@string/playlist_favourite"
-            android:padding="11dp"
+            android:padding="15dp"
             android:scaleType="fitCenter"
             android:src="@drawable/p3x_heart"
             app:layout_constraintEnd_toEndOf="parent"
@@ -482,8 +496,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_mid_button"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="86dp"
+            android:layout_height="86dp"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="28dp"
             android:background="@drawable/bg_flat_ripple"
@@ -496,7 +510,7 @@
             app:icon="@drawable/ic_play_arrow_filled"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="72dp"
+            app:iconSize="86dp"
             app:iconTint="?attr/colorPrimary"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -506,8 +520,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_loop"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="86dp"
+            android:layout_height="86dp"
             android:background="@drawable/bg_flat_ripple"
             android:checkable="true"
             android:contentDescription="@string/repeat_mode"
@@ -519,7 +533,7 @@
             app:icon="@drawable/ic_repeat"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="72dp"
+            app:iconSize="86dp"
             app:iconTint="@color/sl_check_button"
             app:layout_constraintBottom_toBottomOf="@id/sheet_mid_button"
             app:layout_constraintEnd_toStartOf="@id/sheet_mid_button"
@@ -530,8 +544,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/playlist"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="86dp"
+            android:layout_height="86dp"
             android:background="@drawable/bg_flat_ripple"
             android:contentDescription="@string/current_playlist"
             android:insetLeft="0dp"
@@ -541,7 +555,7 @@
             app:icon="@drawable/ic_playlist_play"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="72dp"
+            app:iconSize="86dp"
             app:iconTint="?attr/colorOnSurface"
             app:layout_constraintBottom_toBottomOf="@id/sheet_mid_button"
             app:layout_constraintEnd_toEndOf="parent"
@@ -552,8 +566,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_previous_song"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="86dp"
+            android:layout_height="86dp"
             android:background="@drawable/rp_buttons_dynamic"
             android:contentDescription="@string/skip_previous"
             android:insetLeft="0dp"
@@ -564,7 +578,7 @@
             app:icon="@drawable/ic_skip_previous"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="72dp"
+            app:iconSize="86dp"
             app:iconTint="?attr/colorOnSurface"
             app:layout_constraintBottom_toBottomOf="@id/sheet_mid_button"
             app:layout_constraintEnd_toStartOf="@id/sheet_mid_button"
@@ -574,8 +588,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_next_song"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
+            android:layout_width="86dp"
+            android:layout_height="86dp"
             android:background="@drawable/rp_buttons_dynamic"
             android:contentDescription="@string/skip_next"
             android:insetLeft="0dp"
@@ -586,7 +600,7 @@
             app:icon="@drawable/ic_skip_next"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="72dp"
+            app:iconSize="86dp"
             app:iconTint="?attr/colorOnSurface"
             app:layout_constraintBottom_toBottomOf="@id/sheet_mid_button"
             app:layout_constraintEnd_toEndOf="parent"

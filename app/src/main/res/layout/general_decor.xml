@@ -26,8 +26,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/create_playlist"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="31dp"
+            android:layout_height="31dp"
             android:background="@drawable/rp_buttons"
             android:contentDescription="@string/create_playlist"
             android:insetLeft="0dp"
@@ -38,15 +38,15 @@
             app:icon="@drawable/outline_add_24"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="48dp"
+            app:iconSize="31dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/create_playlist"
             tools:visibility="visible" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/play_all"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="31dp"
+            android:layout_height="31dp"
             android:background="@drawable/rp_buttons"
             android:contentDescription="@string/play_all"
             android:insetLeft="0dp"
@@ -57,15 +57,15 @@
             app:icon="@drawable/ic_play_arrow"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="48dp"
+            app:iconSize="31dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/play_all"
             tools:visibility="visible" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/shuffle_all"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="31dp"
+            android:layout_height="31dp"
             android:background="@drawable/rp_buttons"
             android:contentDescription="@string/shuffle_all"
             android:insetLeft="0dp"
@@ -76,15 +76,15 @@
             app:icon="@drawable/ic_shuffle"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="48dp"
+            app:iconSize="31dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/shuffle_all"
             tools:visibility="visible" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sort"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="31dp"
+            android:layout_height="31dp"
             android:background="@drawable/rp_buttons"
             android:contentDescription="@string/sort"
             android:insetLeft="0dp"
@@ -94,14 +94,14 @@
             app:icon="@drawable/ic_sort"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="48dp"
+            app:iconSize="31dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/sort" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/decor_search"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="31dp"
+            android:layout_height="31dp"
             android:background="@drawable/rp_buttons"
             android:contentDescription="Search"
             android:insetLeft="0dp"
@@ -112,15 +112,15 @@
             app:icon="@drawable/ic_search"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="48dp"
+            app:iconSize="31dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="Search"
             tools:visibility="visible" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/decor_more"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="31dp"
+            android:layout_height="31dp"
             android:background="@drawable/rp_buttons"
             android:contentDescription="More"
             android:insetLeft="0dp"
@@ -131,15 +131,15 @@
             app:icon="@drawable/ic_more_vert_alt"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="48dp"
+            app:iconSize="31dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="More"
             tools:visibility="visible" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/jumpUp"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="31dp"
+            android:layout_height="31dp"
             android:background="@drawable/rp_buttons"
             android:contentDescription="@string/scroll_to_albums"
             android:insetLeft="0dp"
@@ -150,15 +150,15 @@
             app:icon="@drawable/baseline_arrow_upward_24"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="48dp"
+            app:iconSize="31dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/scroll_to_albums"
             tools:visibility="visible" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/jumpDown"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="31dp"
+            android:layout_height="31dp"
             android:background="@drawable/rp_buttons"
             android:contentDescription="@string/scroll_to_songs"
             android:insetLeft="0dp"
@@ -169,7 +169,7 @@
             app:icon="@drawable/baseline_arrow_downward_24"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="48dp"
+            app:iconSize="31dp"
             app:iconTint="?attr/colorPrimary"
             app:tooltipText="@string/scroll_to_songs"
             tools:visibility="visible" />

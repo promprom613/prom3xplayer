@@ -27,6 +27,11 @@
             android:title="@string/sort_by_liked"
             app:showAsAction="never" />
         <item
+            android:id="@+id/random"
+            android:orderInCategory="1"
+            android:title="@string/p3x_sort_random"
+            app:showAsAction="never" />
+        <item
             android:id="@+id/artist"
             android:orderInCategory="2"
             android:title="@string/sort_by_artist"

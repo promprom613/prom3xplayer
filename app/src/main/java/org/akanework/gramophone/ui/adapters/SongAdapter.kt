@@ -228,6 +228,14 @@ class SongAdapter(
             resortTrigger.value++
     }
 
+    private val lyricsCache = HashMap<String, Boolean>()
+    override fun hasLyrics(item: MediaItem): Boolean = lyricsCache.getOrPut(item.mediaId) {
+        val f = item.getFile() ?: return@getOrPut false
+        val base = f.nameWithoutExtension
+        val dir = f.parentFile ?: return@getOrPut false
+        java.io.File(dir, "$base.lrc").exists() || java.io.File(dir, "$base.LRC").exists()
+    }
+
     override fun titleColorOf(item: MediaItem): Int? =
         if (org.akanework.gramophone.logic.PendingNext.isPending(item.mediaId))
             org.akanework.gramophone.logic.PendingNext.BLUE
@@ -479,7 +487,8 @@ class SongAdapter(
             Sorter.Type.ByModifiedDateDescending, Sorter.Type.ByModifiedDateAscending,
             Sorter.Type.ByFilePathDescending, Sorter.Type.ByFilePathAscending,
             Sorter.Type.ByDiscAndTrack,
-            Sorter.Type.ByLikedDescending, Sorter.Type.ByLikedAscending
+            Sorter.Type.ByLikedDescending, Sorter.Type.ByLikedAscending,
+            Sorter.Type.Random
         )
     ) {
         override fun isLiked(item: MediaItem): Boolean {

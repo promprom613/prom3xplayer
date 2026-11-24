@@ -92,8 +92,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/p3x_play"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="31dp"
+        android:layout_height="31dp"
         android:background="@drawable/rp_buttons"
         android:contentDescription="@string/shuffle"
         android:insetLeft="0dp"
@@ -104,7 +104,7 @@
         app:icon="@drawable/ic_play_arrow"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="48dp"
+        app:iconSize="31dp"
         app:iconTint="?attr/colorOnSurface"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/more"
@@ -112,8 +112,8 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/more"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="31dp"
+        android:layout_height="31dp"
         android:layout_gravity="end|center_vertical"
         android:background="@drawable/rp_buttons"
         android:contentDescription="@string/more"
@@ -124,7 +124,7 @@
         app:icon="@drawable/ic_more_vert_alt"
         app:iconGravity="textStart"
         app:iconPadding="0dp"
-        app:iconSize="48dp"
+        app:iconSize="31dp"
         app:iconTint="?attr/colorOnSurface"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

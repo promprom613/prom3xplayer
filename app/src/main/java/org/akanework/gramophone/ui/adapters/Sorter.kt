@@ -107,9 +107,13 @@ class Sorter<T>(
         ByFilePathDescending, ByFilePathAscending,
         ByDiscAndTrack, ByDiscAndTrackDescending,
         ByLikedDescending, ByLikedAscending,
+        Random,
         None;
 
         companion object {
+        @Volatile
+        var randomSeed: Long = 0L
+
             fun inverse(type: Type): Type? = when (type) {
                 ByTitleDescending -> ByTitleAscending
                 ByTitleAscending -> ByTitleDescending
@@ -143,6 +147,7 @@ class Sorter<T>(
                 ByDiscAndTrackDescending -> ByDiscAndTrack
                 ByLikedDescending -> ByLikedAscending
                 ByLikedAscending -> ByLikedDescending
+                Random -> Random
                 None -> null
             }
         }
@@ -363,6 +368,13 @@ class Sorter<T>(
                 )
             }
 
+            Type.Random -> {
+                SupportComparator.createInversionComparator(
+                    compareBy<T> { (it.hashCode().toLong() * -7046029254386353131L) xor randomSeed },
+                    false, null
+                )
+            }
+
             Type.ByLikedDescending -> {
                 SupportComparator.createInversionComparator(
                     compareBy { if (sortingHelper.isLiked(it)) 1 else 0 }, true,
@@ -460,7 +472,7 @@ class Sorter<T>(
                 } + 1).toString()
             }
 
-            Type.ByLikedDescending, Type.ByLikedAscending -> null
+            Type.ByLikedDescending, Type.ByLikedAscending, Type.Random -> null
 
             Type.None -> null
         }?.ifEmpty { null }?.uppercase()
