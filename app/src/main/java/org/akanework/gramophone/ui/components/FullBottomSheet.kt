@@ -298,7 +298,14 @@ class FullBottomSheet
     private val bottomSheetFullSeekBar: SeekBar
     private val bottomSheetFullSlider: Slider
     private val bottomSheetFullCoverFrame: MaterialCardView
-    val bottomSheetFullLyricView: LyricsView by lazy { (parent as ViewGroup).findViewById(R.id.lyric_frame)!! }
+    val bottomSheetFullLyricView: LyricsView by lazy {
+        (parent as ViewGroup).findViewById<LyricsView>(R.id.lyric_frame)!!.also { v ->
+            v.background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(0xE62A2A2A.toInt())
+                cornerRadius = 28 * resources.displayMetrics.density
+            }
+        }
+    }
     private val progressDrawable: SquigglyProgress
     private var pqs: PlaylistQueueSheet? = null
 
@@ -327,10 +334,6 @@ class FullBottomSheet
                 p3xPlaylists = it
                 p3xUpdatePlaylistLabel(instance?.currentMediaItem)
             }
-        }
-        bottomSheetFullLyricView.background = android.graphics.drawable.GradientDrawable().apply {
-            setColor(0xE62A2A2A.toInt())
-            cornerRadius = 28 * resources.displayMetrics.density
         }
         listOf(bottomSheetShuffleButton, bottomSheetLoopButton, bottomSheetFavoriteButton,
             bottomSheetTimerButton).forEach { b ->
