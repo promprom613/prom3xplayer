@@ -329,8 +329,8 @@ open class BaseDecorAdapter<T : AdapterFragment.BaseInterface<*>>(
 
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 if (menuItem.itemId == R.id.random) {
-                    Sorter.randomSeed = System.nanoTime()
-                    adapter.p3xReshuffle()
+                    Sorter.Type.randomSeed = System.nanoTime()
+                    (adapter as? BaseAdapter<*>)?.p3xReshuffle()
                 }
                 when (menuItem.itemId) {
                     in buttonMap.keys -> {

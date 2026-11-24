@@ -370,7 +370,7 @@ class Sorter<T>(
 
             Type.Random -> {
                 SupportComparator.createInversionComparator(
-                    compareBy<T> { (it.hashCode().toLong() * -7046029254386353131L) xor randomSeed },
+                    compareBy<T> { (it.hashCode().toLong() * -7046029254386353131L) xor Type.randomSeed },
                     false, null
                 )
             }
