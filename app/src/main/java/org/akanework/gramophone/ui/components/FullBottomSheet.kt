@@ -17,6 +17,7 @@
 
 package org.akanework.gramophone.ui.components
 
+import org.akanework.gramophone.logic.p3xBoost
 import org.akanework.gramophone.logic.gramophoneApplication
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
@@ -329,6 +330,7 @@ class FullBottomSheet
         bottomSheetPlaybackSpeedButton = findViewById(R.id.playback_speed)
         bottomSheetFavoriteButton = findViewById(R.id.favor)
         p3xHeart = findViewById(R.id.p3x_heart)
+        bottomSheetShuffleButton.visibility = View.GONE
         kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
             context.gramophoneApplication.reader.playlistListFlow.collect {
                 p3xPlaylists = it
@@ -541,12 +543,9 @@ class FullBottomSheet
 
         bottomSheetLoopButton.setOnClickListener {
             ViewCompat.performHapticFeedback(it, HapticFeedbackConstantsCompat.CONTEXT_CLICK)
-            instance?.repeatMode = when (instance?.repeatMode) {
-                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
-                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
-                Player.REPEAT_MODE_ONE -> Player.REPEAT_MODE_OFF
-                else -> throw IllegalStateException()
-            }
+            instance?.repeatMode =
+                if (instance?.repeatMode == Player.REPEAT_MODE_ONE) Player.REPEAT_MODE_OFF
+                else Player.REPEAT_MODE_ONE
         }
 
         bottomSheetPlaybackSpeedButton.setOnClickListener {
@@ -692,7 +691,7 @@ class FullBottomSheet
                 backgroundProcessedColor
             ),
         )
-        bottomSheetFullSeekBar.progressTintList = ColorStateList.valueOf(colorPrimary)
+        bottomSheetFullSeekBar.progressTintList = ColorStateList.valueOf(p3xBoost(colorPrimary))
     }
 
     override fun onSaveInstanceState(): Parcelable {
@@ -1037,7 +1036,7 @@ class FullBottomSheet
             resources.configuration.uiMode =
                 context.resources.configuration.uiMode
         }.let { themeContext ->
-            if (prefs.getBoolean("pureDark", false) &&
+            if (prefs.getBoolean("pureDark", true) &&
                 (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
                 Configuration.UI_MODE_NIGHT_YES
             ) {
@@ -1292,15 +1291,15 @@ class FullBottomSheet
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
                     bottomSheetFullSlider.thumbTintList =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetFullSlider.trackActiveTintList =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetFullSeekBar.progressTintList =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetFullSeekBar.thumbTintList =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetFullLyricView.updateHighlightColor(progressColor)
-                    p3xAdd?.imageTintList = ColorStateList.valueOf(progressColor)
+                    p3xAdd?.imageTintList = ColorStateList.valueOf(p3xBoost(progressColor))
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1309,7 +1308,7 @@ class FullBottomSheet
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
                     bottomSheetFullControllerButton.backgroundTintList =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1318,7 +1317,7 @@ class FullBottomSheet
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
                     bottomSheetFullControllerButton.iconTint =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1327,7 +1326,7 @@ class FullBottomSheet
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
                     bottomSheetFullSlider.trackInactiveTintList =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1336,19 +1335,19 @@ class FullBottomSheet
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
                     bottomSheetTimerButton.iconTint =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetPlaybackSpeedButton.iconTint =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetPlaylistButton.iconTint =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetLyricButton.iconTint =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetFullNextButton.iconTint =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetFullPreviousButton.iconTint =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                     bottomSheetFullSlideUpButton.iconTint =
-                        ColorStateList.valueOf(progressColor)
+                        ColorStateList.valueOf(p3xBoost(progressColor))
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1372,7 +1371,7 @@ class FullBottomSheet
             loopTransition.apply {
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
-                    bottomSheetLoopButton.iconTint = ColorStateList.valueOf(progressColor)
+                    bottomSheetLoopButton.iconTint = ColorStateList.valueOf(p3xBoost(progressColor))
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1380,7 +1379,7 @@ class FullBottomSheet
             shuffleTransition.apply {
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
-                    bottomSheetShuffleButton.iconTint = ColorStateList.valueOf(progressColor)
+                    bottomSheetShuffleButton.iconTint = ColorStateList.valueOf(p3xBoost(progressColor))
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1388,7 +1387,7 @@ class FullBottomSheet
             favoriteTransition.apply {
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
-                    bottomSheetFavoriteButton.iconTint = ColorStateList.valueOf(progressColor)
+                    bottomSheetFavoriteButton.iconTint = ColorStateList.valueOf(p3xBoost(progressColor))
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1427,7 +1426,7 @@ class FullBottomSheet
             setBackgroundColor(backgroundProcessedColor)
             
             p3xTitleBase = colorPrimary
-            p3xAdd?.imageTintList = ColorStateList.valueOf(colorPrimary)
+            p3xAdd?.imageTintList = ColorStateList.valueOf(p3xBoost(colorPrimary))
             bottomSheetFullTitle.setTextColor(
                 if (p3xLiked) LikedSongs.PINK else colorPrimary
             )
@@ -1437,16 +1436,16 @@ class FullBottomSheet
             bottomSheetFullControllerButton.backgroundTintList =
                 ColorStateList.valueOf(colorSecondaryContainer)
             bottomSheetFullControllerButton.iconTint =
-                ColorStateList.valueOf(colorPrimary)
+                ColorStateList.valueOf(p3xBoost(colorPrimary))
 
             bottomSheetFullSlider.thumbTintList =
-                ColorStateList.valueOf(colorPrimary)
+                ColorStateList.valueOf(p3xBoost(colorPrimary))
             bottomSheetFullSlider.trackActiveTintList =
-                ColorStateList.valueOf(colorPrimary)
+                ColorStateList.valueOf(p3xBoost(colorPrimary))
             bottomSheetFullSeekBar.progressTintList =
-                ColorStateList.valueOf(colorPrimary)
+                ColorStateList.valueOf(p3xBoost(colorPrimary))
             bottomSheetFullSeekBar.thumbTintList =
-                ColorStateList.valueOf(colorPrimary)
+                ColorStateList.valueOf(p3xBoost(colorPrimary))
             bottomSheetFullSlider.trackInactiveTintList =
                 ColorStateList.valueOf(colorContrastFainted)
             TextViewCompat.setCompoundDrawableTintList(

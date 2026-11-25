@@ -133,7 +133,7 @@ class PlaylistQueueSheet(
                     callbackFlow {
                         val cb = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
                             if (key == "pureDark") {
-                                trySendBlocking(prefs.getBooleanStrict("pureDark", false))
+                                trySendBlocking(prefs.getBooleanStrict("pureDark", true))
                             }
                         }
                         prefs.registerOnSharedPreferenceChangeListener(cb)
@@ -142,7 +142,7 @@ class PlaylistQueueSheet(
                         }
                     }.stateIn(
                         lifecycleScope, WhileSubscribed(),
-                        prefs.getBooleanStrict("pureDark", false)
+                        prefs.getBooleanStrict("pureDark", true)
                     )
                 }
                 val pureDark by pureDarkFlow.collectAsState()

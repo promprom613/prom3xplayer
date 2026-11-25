@@ -37,7 +37,7 @@ open class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = PreferenceManager.getDefaultSharedPreferences(applicationContext)
-        if (prefs.getBooleanStrict("pureDark", false) &&
+        if (prefs.getBooleanStrict("pureDark", true) &&
             (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
         ) {

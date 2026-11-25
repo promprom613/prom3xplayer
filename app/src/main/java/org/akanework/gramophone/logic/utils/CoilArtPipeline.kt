@@ -309,6 +309,8 @@ object CoilArtPipeline {
                         dataSource = DataSource.DISK,
                     )
                 }
+                if (artCache != null && artCache.exists() && artCache.length() == 0L)
+                    return@Fetcher null // known to have no embedded art: do not probe again
                 val uri = ContentUris.withAppendedId(MediaStore.Audio.Media
                     .EXTERNAL_CONTENT_URI, data.id)
                 MediaStoreCompat.openAssetFileDescriptor(options.context,
@@ -335,6 +337,8 @@ object CoilArtPipeline {
                                 mimeType = null,
                                 dataSource = DataSource.DISK,
                             )
+                        } ?: run {
+                            if (artCache != null) P3xArtCache.put(artCache, ByteArray(0))
                         }
                     } catch (e: RuntimeException) {
                         throw IOException("Failed to create thumbnail", e)

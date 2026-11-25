@@ -175,6 +175,12 @@ open class MyRecyclerView : FixOnItemTouchListenerRecyclerView,
                     })
                 }
                 .useMd2Style()
+                .setThumbDrawable(android.graphics.drawable.GradientDrawable().apply {
+                    setColor(0xCCBDBDBD.toInt())
+                    val d = resources.displayMetrics.density
+                    cornerRadius = 6 * d
+                    setSize((12 * d).toInt(), (56 * d).toInt())
+                })
                 .setTrackDrawable(
                     AppCompatResources.getDrawable(
                         context,
@@ -182,6 +188,7 @@ open class MyRecyclerView : FixOnItemTouchListenerRecyclerView,
                     )!!
                 )
                 .build()
+                .also { postDelayed({ scrollBy(0, 1); scrollBy(0, -1) }, 400) }
         }
         if (width == 0)
             this.deferredFastScrollBuilder = fsBuilder
@@ -240,16 +247,10 @@ open class MyRecyclerView : FixOnItemTouchListenerRecyclerView,
             this.thumbViewCache = thumbView
         }
 
-        override fun hideScrollbar(trackView: View, thumbView: View) {
-            super.hideScrollbar(trackView, thumbView)
-            this.trackViewCache = null
-            this.thumbViewCache = null
-        }
+        // the scroll bar stays where it is, it never fades out
+        override fun hideScrollbar(trackView: View, thumbView: View) {}
 
-        fun hideScrollbar() {
-            if (trackViewCache != null)
-                hideScrollbar(trackViewCache!!, thumbViewCache!!)
-        }
+        fun hideScrollbar() {}
     }
 }
 

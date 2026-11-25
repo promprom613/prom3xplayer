@@ -259,6 +259,8 @@
             <org.akanework.gramophone.ui.components.MarqueeTextView
                 android:id="@+id/full_song_name"
                 android:layout_width="match_parent"
+                android:layout_marginStart="64dp"
+                android:layout_marginEnd="64dp"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif"
                 android:gravity="center"

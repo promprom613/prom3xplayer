@@ -228,12 +228,23 @@ class SongAdapter(
             resortTrigger.value++
     }
 
-    private val lyricsCache = HashMap<String, Boolean>()
-    override fun hasLyrics(item: MediaItem): Boolean = lyricsCache.getOrPut(item.mediaId) {
-        val f = item.getFile() ?: return@getOrPut false
-        val base = f.nameWithoutExtension
-        val dir = f.parentFile ?: return@getOrPut false
-        java.io.File(dir, "$base.lrc").exists() || java.io.File(dir, "$base.LRC").exists()
+    private val lyricsCache = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+    private val lyricsPending = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+    override fun hasLyrics(item: MediaItem): Boolean {
+        lyricsCache[item.mediaId]?.let { return it }
+        if (lyricsPending.add(item.mediaId)) {
+            val f = item.getFile()
+            val id = item.mediaId
+            org.akanework.gramophone.logic.P3xLyricsProbe.executor.execute {
+                val r = f != null && org.akanework.gramophone.logic.P3xLyricsProbe.has(f)
+                lyricsCache[id] = r
+                if (r) recyclerView?.post {
+                    val idx = getSongList().indexOfFirst { it.mediaId == id }
+                    if (idx >= 0) notifyItemChanged(idx)
+                }
+            }
+        }
+        return false
     }
 
     override fun titleColorOf(item: MediaItem): Int? =

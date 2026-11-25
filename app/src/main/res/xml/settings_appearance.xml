@@ -33,7 +33,7 @@
             app:useSimpleSummaryProvider="true" />
 
         <SwitchPreferenceCompat
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="pureDark"
             android:layout="@layout/preference_switch"
             android:summary="@string/settings_pure_dark_summary"

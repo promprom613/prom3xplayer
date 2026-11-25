@@ -34,7 +34,7 @@ abstract class BaseComposeActivity : AppCompatActivity() {
         callbackFlow {
             val cb = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
                 if (key == "pureDark") {
-                    trySendBlocking(prefs.getBooleanStrict("pureDark", false))
+                    trySendBlocking(prefs.getBooleanStrict("pureDark", true))
                 }
             }
             prefs.registerOnSharedPreferenceChangeListener(cb)
@@ -43,7 +43,7 @@ abstract class BaseComposeActivity : AppCompatActivity() {
             }
         }.stateIn(
             lifecycleScope, WhileSubscribed(),
-            prefs.getBooleanStrict("pureDark", false)
+            prefs.getBooleanStrict("pureDark", true)
         )
     }
 
