@@ -255,8 +255,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_mid_button"
-            android:layout_width="86dp"
-            android:layout_height="86dp"
+            android:layout_width="99dp"
+            android:layout_height="99dp"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="18dp"
             android:background="@drawable/bg_play_anim"
@@ -269,7 +269,7 @@
             app:icon="@drawable/play_anim"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="86dp"
+            app:iconSize="99dp"
             app:iconTint="?attr/colorPrimary"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -279,8 +279,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_previous_song"
-            android:layout_width="86dp"
-            android:layout_height="86dp"
+            android:layout_width="99dp"
+            android:layout_height="99dp"
             android:layout_gravity="center"
             android:layout_marginEnd="8dp"
             android:layout_toStartOf="@id/sheet_mid_button"
@@ -293,7 +293,7 @@
             app:icon="@drawable/ic_skip_previous"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="86dp"
+            app:iconSize="99dp"
             app:iconTint="?attr/colorOnSurface"
             app:layout_constraintBottom_toBottomOf="@id/sheet_mid_button"
             app:layout_constraintEnd_toStartOf="@id/sheet_mid_button"
@@ -304,8 +304,8 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/sheet_next_song"
-            android:layout_width="86dp"
-            android:layout_height="86dp"
+            android:layout_width="99dp"
+            android:layout_height="99dp"
             android:layout_gravity="center"
             android:layout_marginStart="8dp"
             android:layout_toEndOf="@id/sheet_mid_button"
@@ -318,7 +318,7 @@
             app:icon="@drawable/ic_skip_next"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconSize="86dp"
+            app:iconSize="99dp"
             app:iconTint="?attr/colorOnSurface"
             app:layout_constraintBottom_toBottomOf="@id/sheet_mid_button"
             app:layout_constraintEnd_toEndOf="parent"

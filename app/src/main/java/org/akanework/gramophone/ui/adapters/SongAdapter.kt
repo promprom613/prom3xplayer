@@ -195,6 +195,17 @@ class SongAdapter(
     private fun p3xSwipePlayNext(song: MediaItem) {
         val player = mainActivity.getPlayer() ?: return
         org.akanework.gramophone.logic.Haptics.tick(context)
+        if (org.akanework.gramophone.logic.PendingNext.isPending(song.mediaId)) {
+            // swiping the same song again cancels its play-next
+            var i = player.mediaItemCount - 1
+            while (i > player.currentMediaItemIndex) {
+                val it = player.getMediaItemAt(i)
+                if (it.mediaId == song.mediaId && it.mediaMetadata.extras?.getBoolean(P3X_SWIPE_KEY) == true)
+                    player.removeMediaItem(i)
+                i--
+            }
+            return
+        }
         val extras = android.os.Bundle(song.mediaMetadata.extras ?: android.os.Bundle.EMPTY)
         extras.putBoolean(P3X_SWIPE_KEY, true)
         val marked = song.buildUpon().setMediaMetadata(

@@ -277,6 +277,7 @@ class FullBottomSheet
     private val p3xAdd: android.widget.ImageView?
     private var p3xLiked = false
     private var p3xPendingUntil = 0L
+    private var p3xAccent: Int = Color.WHITE
     private var p3xPlaylists: List<uk.akane.libphonograph.items.Playlist> = emptyList()
 
     private fun p3xUpdatePlaylistLabel(item: MediaItem?) {
@@ -1316,8 +1317,16 @@ class FullBottomSheet
             onSecondaryContainerTransition.apply {
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
-                    bottomSheetFullControllerButton.iconTint =
-                        ColorStateList.valueOf(p3xBoost(progressColor))
+                    p3xAccent = p3xBoost(progressColor)
+                    bottomSheetFullControllerButton.iconTint = ColorStateList.valueOf(p3xAccent)
+                    bottomSheetLoopButton.iconTint = ColorStateList(
+                        arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                        intArrayOf(p3xAccent, androidx.core.graphics.ColorUtils.setAlphaComponent(p3xAccent, 110))
+                    )
+                    p3xHeart?.let { h ->
+                        if (!p3xLiked && p3xAnim?.isRunning != true)
+                            h.imageTintList = ColorStateList.valueOf(p3xAccent)
+                    }
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1335,19 +1344,19 @@ class FullBottomSheet
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
                     bottomSheetTimerButton.iconTint =
-                        ColorStateList.valueOf(p3xBoost(progressColor))
+                        ColorStateList.valueOf(p3xAccent)
                     bottomSheetPlaybackSpeedButton.iconTint =
-                        ColorStateList.valueOf(p3xBoost(progressColor))
+                        ColorStateList.valueOf(p3xAccent)
                     bottomSheetPlaylistButton.iconTint =
-                        ColorStateList.valueOf(p3xBoost(progressColor))
+                        ColorStateList.valueOf(p3xAccent)
                     bottomSheetLyricButton.iconTint =
-                        ColorStateList.valueOf(p3xBoost(progressColor))
+                        ColorStateList.valueOf(p3xAccent)
                     bottomSheetFullNextButton.iconTint =
-                        ColorStateList.valueOf(p3xBoost(progressColor))
+                        ColorStateList.valueOf(p3xAccent)
                     bottomSheetFullPreviousButton.iconTint =
-                        ColorStateList.valueOf(p3xBoost(progressColor))
+                        ColorStateList.valueOf(p3xAccent)
                     bottomSheetFullSlideUpButton.iconTint =
-                        ColorStateList.valueOf(p3xBoost(progressColor))
+                        ColorStateList.valueOf(p3xAccent)
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1592,7 +1601,7 @@ class FullBottomSheet
         if (liked == p3xLiked) {
             if (p3xAnim?.isRunning == true) return
             val heartOk = p3xHeart == null || p3xHeart.imageTintList?.defaultColor ==
-                (if (liked) LikedSongs.PINK else Color.WHITE)
+                (if (liked) LikedSongs.PINK else p3xAccent)
             val titleOk = bottomSheetFullTitle.currentTextColor ==
                 (if (liked) LikedSongs.PINK else p3xTitleBase)
             if (heartOk && titleOk) return
@@ -1603,7 +1612,7 @@ class FullBottomSheet
 
     private fun p3xRenderLiked(animate: Boolean) {
         val heart = p3xHeart
-        val toHeart = if (p3xLiked) LikedSongs.PINK else Color.WHITE
+        val toHeart = if (p3xLiked) LikedSongs.PINK else p3xAccent
         val toTitle = if (p3xLiked) LikedSongs.PINK else p3xTitleBase
         p3xAnim?.cancel()
         p3xAnim = null
@@ -1612,7 +1621,7 @@ class FullBottomSheet
             bottomSheetFullTitle.setTextColor(toTitle)
             return
         }
-        val fromHeart = heart?.imageTintList?.defaultColor ?: Color.WHITE
+        val fromHeart = heart?.imageTintList?.defaultColor ?: p3xAccent
         val fromTitle = bottomSheetFullTitle.currentTextColor
         p3xAnim = ValueAnimator.ofFloat(0f, 1f).apply {
             duration = 220

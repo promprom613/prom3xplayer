@@ -255,9 +255,9 @@ class LyricsView(context: Context, attrs: AttributeSet?) : FrameLayout(context, 
     fun updateTextColor(
         newColor: Int, newHighlightColor: Int, newHighlightTlColor: Int
     ) {
-        defaultTextColor = newColor
-        highlightTextColor = newHighlightColor
-        highlightTlTextColor = newHighlightTlColor
+        defaultTextColor = 0xFFFFFFFF.toInt() // lyrics are always white
+        highlightTextColor = 0xFFFFFFFF.toInt()
+        highlightTlTextColor = 0xFFFFFFFF.toInt()
         adapter?.updateTextColor(defaultTextColor, highlightTextColor)
         newView?.updateTextColor(
             defaultTextColor, highlightTextColor, highlightTlTextColor

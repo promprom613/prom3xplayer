@@ -49,6 +49,8 @@
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
+        <uses-permission android:name="android.permission.MANAGE_MEDIA" />
+
     <application
         android:name=".logic.GramophoneApplication"
         android:allowBackup="true"

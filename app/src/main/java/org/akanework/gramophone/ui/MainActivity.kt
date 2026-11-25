@@ -295,6 +295,23 @@ class MainActivity : BaseActivity() {
     }
 
     @OptIn(FlowPreview::class, InternalCoroutinesApi::class)
+    private fun p3xAskManageMedia() {
+        if (android.os.Build.VERSION.SDK_INT < 31) return
+        try {
+            if (MediaStore.canManageMedia(this)) return
+            val sp = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this)
+            if (sp.getBoolean("p3x_manage_media_asked", false)) return
+            sp.edit().putBoolean("p3x_manage_media_asked", true).apply()
+            startActivity(
+                android.content.Intent(
+                    android.provider.Settings.ACTION_REQUEST_MANAGE_MEDIA,
+                    Uri.parse("package:$packageName")
+                )
+            )
+        } catch (_: Throwable) {
+        }
+    }
+
     fun addToPlaylistDialog(item: MediaItem) {
         val song = Entry.ofMediaItem(item)
         if (song == null) {
@@ -501,8 +518,12 @@ class MainActivity : BaseActivity() {
                     uriIn) else PlaylistSerializer.Playlist.create()
                 val uri = uriIn ?: ItemManipulator.createPlaylist(this,
                     File(name!!))
+                // picking a playlist that already has the song removes it again
+                val already = uriIn != null && songs.all { s -> readback.entries.any { it == s } }
+                val newEntries = if (already) readback.entries.filter { e -> songs.none { it == e } }
+                    else readback.entries + songs
                 ItemManipulator.setPlaylistContent(this, uri, readback
-                    .copy(entries = readback.entries + songs), uriIn == null)
+                    .copy(entries = newEntries), uriIn == null)
             } catch (e: Exception) {
                 Log.e("MainActivity", Log.getThrowableString(e)!!)
                 withContext(Dispatchers.Main) {
@@ -961,6 +982,7 @@ class MainActivity : BaseActivity() {
 
     /** Shows the walkthrough once, the first time the app is opened and ready for use. */
     private fun p3xMaybeShowTutorial() {
+        p3xAskManageMedia()
         if (p3xTutorialShown || !ready || !hasWindowFocus()) return
         if (prefs.getBoolean(TutorialActivity.PREF_DONE, false)) return
         p3xTutorialShown = true

@@ -114,20 +114,34 @@ class SongSwipeCallback(
         target: RecyclerView.ViewHolder
     ) = false
 
-    override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder) = 0.35f
+    // Rows are never "swiped away": the action fires when the finger is released past the
+    // threshold and ItemTouchHelper plays its normal, smooth return animation to the row's place.
+    override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder) = 2f
+    override fun getSwipeEscapeVelocity(defaultValue: Float) = Float.MAX_VALUE
+    override fun getSwipeVelocityThreshold(defaultValue: Float) = Float.MAX_VALUE
 
-    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-        val pos = viewHolder.bindingAdapterPosition
-        val song = songAt(pos)
-        if (pos != RecyclerView.NO_POSITION) onSnapBack(pos) // rebind: the row slides back in by itself
-        if (song == null) return
-        if (direction == ItemTouchHelper.LEFT) onLike(song) else onPlayNext(song)
-    }
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+
+    private var lastDx = 0f
+    private var holding = false
 
     override fun onChildDraw(
         c: Canvas, recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder,
         dX: Float, dY: Float, actionState: Int, isCurrentlyActive: Boolean
     ) {
+        if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+            if (isCurrentlyActive) {
+                lastDx = dX
+                holding = true
+            } else if (holding) {
+                holding = false
+                val pos = viewHolder.bindingAdapterPosition
+                val song = if (pos == RecyclerView.NO_POSITION) null else songAt(pos)
+                if (song != null && abs(lastDx) > viewHolder.itemView.width * 0.35f) {
+                    if (lastDx < 0) onLike(song) else onPlayNext(song)
+                }
+            }
+        }
         super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
     }
 }

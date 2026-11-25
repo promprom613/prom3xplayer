@@ -320,8 +320,7 @@ fun MediaController.setMediaItemsWithTitle(items: List<MediaItem>, position: Int
             customExtras.putBinder("items", MediaItemList(items))
             customExtras.putInt("position", position)
             customExtras.putString("title", title)
-            if (shuffleEnabled != null)
-                customExtras.putBoolean("shuffleEnabled", shuffleEnabled)
+            customExtras.putBoolean("shuffleEnabled", shuffleEnabled ?: false)
             if (repeatMode != null)
                 customExtras.putInt("repeatMode", repeatMode)
         }, Bundle.EMPTY
