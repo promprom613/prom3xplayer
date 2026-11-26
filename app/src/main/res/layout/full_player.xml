@@ -301,34 +301,34 @@
             android:id="@+id/ghost_text_prev"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:alpha="0"
             android:gravity="center"
             android:minHeight="70dp"
             android:orientation="vertical"
-            android:visibility="invisible"
             app:layout_constraintBottom_toBottomOf="@id/textLayout"
             app:layout_constraintEnd_toEndOf="@id/textLayout"
             app:layout_constraintStart_toStartOf="@id/textLayout"
             app:layout_constraintTop_toTopOf="@id/textLayout">
 
-            <TextView
+            <org.akanework.gramophone.ui.components.MarqueeTextView
                 android:id="@+id/ghost_title_prev"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
+                android:layout_marginStart="64dp"
+                android:layout_marginEnd="64dp"
                 android:fontFamily="sans-serif"
                 android:gravity="center"
-                android:maxLines="1"
+                android:scrollbars="none"
                 android:textSize="24sp" />
 
-            <TextView
+            <org.akanework.gramophone.ui.components.MarqueeTextView
                 android:id="@+id/ghost_artist_prev"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:ellipsize="end"
                 android:fontFamily="sans-serif"
                 android:gravity="center"
-                android:maxLines="1"
+                android:scrollbars="none"
                 android:textSize="19sp" />
 
             <TextView
@@ -347,34 +347,34 @@
             android:id="@+id/ghost_text_next"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:alpha="0"
             android:gravity="center"
             android:minHeight="70dp"
             android:orientation="vertical"
-            android:visibility="invisible"
             app:layout_constraintBottom_toBottomOf="@id/textLayout"
             app:layout_constraintEnd_toEndOf="@id/textLayout"
             app:layout_constraintStart_toStartOf="@id/textLayout"
             app:layout_constraintTop_toTopOf="@id/textLayout">
 
-            <TextView
+            <org.akanework.gramophone.ui.components.MarqueeTextView
                 android:id="@+id/ghost_title_next"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
+                android:layout_marginStart="64dp"
+                android:layout_marginEnd="64dp"
                 android:fontFamily="sans-serif"
                 android:gravity="center"
-                android:maxLines="1"
+                android:scrollbars="none"
                 android:textSize="24sp" />
 
-            <TextView
+            <org.akanework.gramophone.ui.components.MarqueeTextView
                 android:id="@+id/ghost_artist_next"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:ellipsize="end"
                 android:fontFamily="sans-serif"
                 android:gravity="center"
-                android:maxLines="1"
+                android:scrollbars="none"
                 android:textSize="19sp" />
 
             <TextView
@@ -691,5 +691,20 @@
             app:tooltipText="@string/playlist_favourite" />
 
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/p3x_more_btn"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@drawable/p3x_more_bg"
+        android:contentDescription="@string/p3x_more"
+        android:padding="10dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_more_vert_alt"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@android:color/white" />
 
 </merge>

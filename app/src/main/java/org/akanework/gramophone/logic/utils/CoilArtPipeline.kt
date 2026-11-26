@@ -322,15 +322,27 @@ object CoilArtPipeline {
 
         private fun p3xRandomCover(options: Options, id: Long): FetchResult? {
             try {
-                if (!androidx.preference.PreferenceManager.getDefaultSharedPreferences(
-                        options.context.applicationContext)
-                        .getBoolean("p3x_random_cover", false)) return null
-                val pool = File(options.context.cacheDir, "p3x_art").listFiles { f ->
+                val ctx = options.context.applicationContext
+                if (!androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx)
+                        .getBoolean("p3x_random_cover", true)) return null
+                val dir = File(ctx.cacheDir, "p3x_art")
+                val map = ctx.getSharedPreferences("p3x_random_cover_map", 0)
+                // the same song keeps the same borrowed cover
+                val saved = map.getString("c$id", null)?.let { File(dir, it) }
+                if (saved != null && saved.length() > 0) {
+                    return SourceFetchResult(
+                        source = ImageSource(saved.toOkioPath(), options.fileSystem),
+                        mimeType = null,
+                        dataSource = DataSource.DISK,
+                    )
+                }
+                val pool = dir.listFiles { f ->
                     f.name.endsWith(".img") && f.length() > 0 &&
                         !f.name.startsWith(id.toString() + "_")
                 }?.sortedBy { it.name } ?: return null
                 if (pool.isEmpty()) return null
                 val pick = pool[Math.floorMod(id.hashCode() * 31 + 7, pool.size)]
+                map.edit().putString("c$id", pick.name).apply()
                 return SourceFetchResult(
                     source = ImageSource(pick.toOkioPath(), options.fileSystem),
                     mimeType = null,

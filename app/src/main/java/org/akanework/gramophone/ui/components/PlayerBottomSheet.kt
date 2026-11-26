@@ -125,6 +125,14 @@ class PlayerBottomSheet private constructor(
         }
     }
 
+    /** An empty queue must never leave the (empty) player on screen, e.g. after power off. */
+    fun hideIfEmpty() {
+        val b = standardBottomSheetBehavior ?: return
+        if ((instance?.mediaItemCount ?: 0) <= 0 && b.state != BottomSheetBehavior.STATE_HIDDEN) {
+            b.state = BottomSheetBehavior.STATE_HIDDEN
+        }
+    }
+
     fun open() {
         val b = standardBottomSheetBehavior ?: return
         if (b.state == BottomSheetBehavior.STATE_COLLAPSED) {

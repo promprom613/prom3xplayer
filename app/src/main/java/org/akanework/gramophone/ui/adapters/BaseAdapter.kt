@@ -312,6 +312,10 @@ abstract class BaseAdapter<T : Any>(
     fun p3xReshuffle() { resortTrigger.value++ }
 
     /** Playlist rows have a small play (shuffle) button next to the menu button. */
+    /** Return true to consume a tap before the normal click action (multi-select). */
+    protected open fun onRowTap(item: T, position: Int): Boolean = false
+    protected open fun onRowLongPress(item: T, position: Int): Boolean = false
+
     protected open fun hasPlayButton(item: T): Boolean = false
     protected open fun hasLyrics(item: T): Boolean = false
     protected open fun onPlayButton(item: T) {}
@@ -431,8 +435,15 @@ abstract class BaseAdapter<T : Any>(
         }
         holder.itemView.setOnClickListener {
             val pos = holder.bindingAdapterPosition
-            if (pos != RecyclerView.NO_POSITION && pos < getItemCount())
-                onClick(item, pos)
+            if (pos != RecyclerView.NO_POSITION && pos < getItemCount()) {
+                if (!onRowTap(item, pos)) onClick(item, pos)
+            }
+        }
+        if (layoutType != LayoutType.GRID && layoutType != LayoutType.COMPACT_GRID) {
+            holder.itemView.setOnLongClickListener {
+                val pos = holder.bindingAdapterPosition
+                pos != RecyclerView.NO_POSITION && pos < getItemCount() && onRowLongPress(item, pos)
+            }
         }
         if (hasMenu) {
             holder.moreButton?.setOnClickListener {

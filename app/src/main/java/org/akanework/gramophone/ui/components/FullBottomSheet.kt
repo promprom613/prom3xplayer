@@ -278,6 +278,10 @@ class FullBottomSheet
     private var p3xLiked = false
     private var p3xPendingUntil = 0L
     private var p3xAccent: Int = Color.WHITE
+        set(v) {
+            field = v
+            org.akanework.gramophone.logic.P3xAccent.set(v)
+        }
     private var p3xPlaylists: List<uk.akane.libphonograph.items.Playlist> = emptyList()
 
     private fun p3xUpdatePlaylistLabel(item: MediaItem?) {
@@ -344,6 +348,12 @@ class FullBottomSheet
         }
         p3xTitleBase = bottomSheetFullTitle.textColors.defaultColor
         p3xHeart?.setOnClickListener { p3xToggleLike() }
+        findViewById<View>(R.id.p3x_more_btn)?.setOnClickListener { v ->
+            val item = instance?.currentMediaItem ?: return@setOnClickListener
+            val pm = androidx.appcompat.widget.PopupMenu(context, v)
+            org.akanework.gramophone.ui.adapters.p3xSongMenu(activity, item, pm)
+            pm.show()
+        }
         p3xAdd = findViewById(R.id.p3x_add)
         p3xAdd?.imageTintList = ColorStateList.valueOf(p3xTitleBase)
         p3xAdd?.setOnClickListener {

@@ -79,6 +79,8 @@ class PlaylistQueueSheet(
         mqEnabled = Flags.MQ_PREVIEW && prefs.getBooleanStrict("mq_preview", false)
 
         setContentView(R.layout.playlist_bottom_sheet)
+        behavior.skipCollapsed = true // a short drag snaps back instead of stopping midway
+        behavior.isHideable = true
         behavior.state = BottomSheetBehavior.STATE_EXPANDED
         if (mqEnabled) {
             behavior.maxWidth = 900.dpToPx(context)
@@ -193,7 +195,31 @@ class PlaylistQueueSheet(
         view!!.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.BLACK)
         window?.navigationBarColor = android.graphics.Color.BLACK
         view.post {
-            BottomSheetBehavior.from(view).state = BottomSheetBehavior.STATE_EXPANDED
+            BottomSheetBehavior.from(view).apply {
+                skipCollapsed = true
+                state = BottomSheetBehavior.STATE_EXPANDED
+            }
+        }
+        p3xApplyBackground()
+    }
+
+    /** The list uses the same blurred background as the player; the top bar stays black. */
+    private fun p3xApplyBackground() {
+        try {
+            val d = activity.findViewById<android.widget.ImageView>(R.id.bg_blur)?.drawable
+            if (d == null) {
+                recyclerView.background = null
+                return
+            }
+            val copy = d.constantState?.newDrawable()?.mutate() ?: d
+            recyclerView.background = android.graphics.drawable.LayerDrawable(
+                arrayOf(
+                    org.akanework.gramophone.logic.P3xCropDrawable(copy),
+                    android.graphics.drawable.ColorDrawable(0x99000000.toInt())
+                )
+            )
+        } catch (e: Exception) {
+            recyclerView.background = null
         }
     }
 
@@ -201,6 +227,7 @@ class PlaylistQueueSheet(
         mediaItem: MediaItem?,
         reason: @Player.MediaItemTransitionReason Int
     ) {
+        recyclerView.postDelayed({ p3xApplyBackground() }, 700)
         if (mqState == null || mqState?.isDetached() == true) return
         val i = instance?.currentMediaItemIndex
         playlistAdapter.currentMediaItemIndex = i?.let { mqState!!.playlist.first.indexOf(i) }
@@ -274,6 +301,26 @@ class PlaylistQueueSheet(
             }
 
         override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: List<Any?>) {
+            p3xBind(holder, position, payloads)
+            val playing = currentMediaItemIndex != null && position == currentMediaItemIndex
+            val bg = holder.itemView.background
+            if (!playing) {
+                if (bg is org.akanework.gramophone.logic.P3xRowDecor) {
+                    bg.animate = false
+                    holder.itemView.background = null
+                }
+            } else {
+                val dd = (bg as? org.akanework.gramophone.logic.P3xRowDecor)
+                    ?: org.akanework.gramophone.logic.P3xRowDecor(
+                        holder.itemView.resources.displayMetrics.density
+                    ).also { holder.itemView.background = it }
+                dd.playing = true
+                holder.nowPlaying.visibility = View.GONE
+                dd.animate = !mqState!!.isDetached() && currentIsPlaying == true
+            }
+        }
+
+        private fun p3xBind(holder: ViewHolder, position: Int, payloads: List<Any?>) {
             holder.dragHandle.visibility = if (mqState!!.isDetached()) View.GONE else View.VISIBLE
             holder.closeButton.visibility = if (mqState!!.isDetached()) View.GONE else View.VISIBLE
             if (payloads.isNotEmpty()) {
@@ -307,6 +354,7 @@ class PlaylistQueueSheet(
         }
 
         override fun onViewRecycled(holder: ViewHolder) {
+            (holder.itemView.background as? org.akanework.gramophone.logic.P3xRowDecor)?.animate = false
             (holder.nowPlaying.drawable as? NowPlayingDrawable?)?.level2Done = null
             holder.nowPlaying.setImageDrawable(null)
             holder.nowPlaying.visibility = View.GONE

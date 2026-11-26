@@ -93,7 +93,8 @@ class SongAdapter(
     allowDiffUtils = allowDiffUtils,
     hasMenu = isSubFragment != R.id.songs,
     fallbackContext = fallbackContext
-), SharedPreferences.OnSharedPreferenceChangeListener {
+), SharedPreferences.OnSharedPreferenceChangeListener,
+    org.akanework.gramophone.logic.P3xRefreshable {
 
     init {
         lateInit()
@@ -351,127 +352,67 @@ class SongAdapter(
     }
 
     override fun onMenu(item: MediaItem, popupMenu: PopupMenu) {
-        popupMenu.inflate(R.menu.more_menu)
-        popupMenu.menu.findItem(R.id.set_ringtone)?.isVisible = true
-        popupMenu.menu.findItem(R.id.set_notification)?.isVisible = true
+        p3xSongMenu(mainActivity, item, popupMenu)
+    }
 
-        popupMenu.setOnMenuItemClickListener { it1 ->
-            when (it1.itemId) {
-                R.id.set_ringtone -> {
-                    org.akanework.gramophone.logic.RingtoneHelper.set(
-                        mainActivity, item, android.media.RingtoneManager.TYPE_RINGTONE
-                    )
-                    true
-                }
+    // ------------------------------------------------------------ multi-select + row highlight
 
-                R.id.set_notification -> {
-                    org.akanework.gramophone.logic.RingtoneHelper.set(
-                        mainActivity, item, android.media.RingtoneManager.TYPE_NOTIFICATION
-                    )
-                    true
-                }
+    private val p3xDensity = context.resources.displayMetrics.density
 
-                R.id.play_next -> {
-                    val mediaController = mainActivity.getPlayer()
-                    mediaController?.addMediaItem(
-                        mediaController.currentMediaItemIndex + 1,
-                        item,
-                    )
-                    true
-                }
+    override fun p3xRefresh() {
+        val n = getItemCount()
+        if (n > 0) notifyItemRangeChanged(0, n, false)
+    }
 
-                R.id.add_to_queue -> {
-                    val mediaController = mainActivity.getPlayer()
-                    mediaController?.addMediaItem(
-                        item,
-                    )
-                    true
-                }
-
-                R.id.album -> {
-                    mainActivity.startFragment(GeneralSubFragment()) {
-                        putString("Id", item.mediaMetadata.albumId?.toString())
-                        putInt("Item", R.id.album)
-                    }
-                    true
-                }
-
-                R.id.artist -> {
-                    mainActivity.startFragment(ArtistSubFragment()) {
-                        putString("Id", item.mediaMetadata.artistId?.toString())
-                        putInt("Item", R.id.artist)
-                    }
-                    true
-                }
-
-                R.id.details -> {
-                    mainActivity.startFragment(DetailDialogFragment()) {
-                        putString("Id", item.mediaId)
-                    }
-                    true
-                }
-
-                R.id.delete -> {
-                    CoroutineScope(Dispatchers.Default).launch {
-                        val res = ItemManipulator.deleteSongs(
-                            mainActivity,
-                            listOf(item.getFile()!! to item.requireMediaStoreId())
-                        )
-                        if (res != null) {
-                            withContext(Dispatchers.Main) {
-                                MaterialAlertDialogBuilder(context)
-                                    .setTitle(R.string.delete)
-                                    .setMessage(
-                                        context.getString(
-                                            R.string.delete_really,
-                                            item.mediaMetadata.title
-                                        )
-                                    )
-                                    .setPositiveButton(R.string.delete) { _, _ ->
-                                        res.invoke()
-                                    }
-                                    .setNegativeButton(android.R.string.cancel) { _, _ -> }
-                                    .show()
-                            }
-                        }
-                    }
-                    true
-                }
-
-                R.id.share -> {
-                    val uri = item.requestMetadata.mediaUri
-                        ?: item.localConfiguration?.uri
-                        ?: return@setOnMenuItemClickListener true
-
-                    val mimeType = item.localConfiguration?.mimeType ?: "audio/*"
-
-                    try {
-                        ShareCompat.IntentBuilder(mainActivity)
-                            .setType(mimeType)
-                            .setStream(uri)
-                            .setChooserTitle("Share audio file")
-                            .startChooser()
-                    } catch (e: Exception) {
-                        P3xToast.makeText(
-                            mainActivity,
-                            "Unable to share: ${e.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                    true
-                }
-
-                R.id.add_to_playlist -> {
-                    mainActivity.addToPlaylistDialog(item)
-                    true
-                }
-
-                else -> false
+    private fun p3xApplyDecor(holder: ViewHolder, position: Int) {
+        val l = getSongList()
+        if (position < 0 || position >= l.size) return
+        val id = l[position].mediaId
+        val playing = currentMediaItem != null && id == currentMediaItem
+        val sel = org.akanework.gramophone.logic.P3xSelection.has(id)
+        val bg = holder.itemView.background
+        if (!playing && !sel) {
+            if (bg is org.akanework.gramophone.logic.P3xRowDecor) {
+                bg.animate = false
+                holder.itemView.background = null
             }
+            return
         }
+        val d = (bg as? org.akanework.gramophone.logic.P3xRowDecor)
+            ?: org.akanework.gramophone.logic.P3xRowDecor(p3xDensity).also {
+                holder.itemView.background = it
+            }
+        d.playing = playing
+        d.selected = sel
+        if (playing) holder.nowPlaying.visibility = View.GONE // the row bars replace it
+        d.animate = playing && currentIsPlaying == true
+    }
+
+    override fun onViewRecycled(holder: ViewHolder) {
+        (holder.itemView.background as? org.akanework.gramophone.logic.P3xRowDecor)?.animate = false
+        super.onViewRecycled(holder)
+    }
+
+    override fun onRowTap(item: MediaItem, position: Int): Boolean {
+        if (org.akanework.gramophone.logic.P3xSelection.items.isEmpty()) return false
+        org.akanework.gramophone.logic.P3xSelection.register(this)
+        org.akanework.gramophone.logic.P3xSelection.toggle(item)
+        return true
+    }
+
+    override fun onRowLongPress(item: MediaItem, position: Int): Boolean {
+        org.akanework.gramophone.logic.P3xSelection.register(this)
+        org.akanework.gramophone.logic.P3xSelection.toggle(item)
+        org.akanework.gramophone.logic.P3xSelectionBar.ensure(mainActivity) { getSongList() }
+        return true
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
+        p3xBind(holder, position, payloads)
+        p3xApplyDecor(holder, position)
+    }
+
+    private fun p3xBind(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
         if (payloads.isNotEmpty()) {
             if (payloads.none { it is Boolean && it }) {
                 holder.nowPlaying.drawable?.level = if (currentIsPlaying == true) 1 else 0

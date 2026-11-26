@@ -87,7 +87,7 @@
         android:title="@string/p3x_cat_sounds">
 
         <SwitchPreferenceCompat
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="p3x_random_cover"
             android:layout="@layout/preference_switch"
             android:summary="@string/p3x_pref_random_cover_summary"

@@ -1386,4 +1386,7 @@ supporting local search. This string is displayed in the search bar when using G
         <item quantity="other">%d Playlists</item>
     </plurals>
     <string name="p3x_sort_random">Random</string>
+    <string name="p3x_cancel_selection">Cancel selection</string>
+    <string name="p3x_select_all">Select all</string>
+    <string name="p3x_more">More</string>
 </resources>

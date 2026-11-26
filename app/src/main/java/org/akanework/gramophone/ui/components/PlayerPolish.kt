@@ -323,7 +323,13 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         sheet.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             fixMargins()
             updateExclusion()
+            resetIfIdle()
         }
+        activity.lifecycle.addObserver(object : LifecycleEventObserver {
+            override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+                if (event == Lifecycle.Event.ON_RESUME) resetIfIdle()
+            }
+        })
         activity.controllerViewModel.addRecreationalPlayerListener(activity.lifecycle, listener) {
             val inst = activity.getPlayer()
             loadBackground(inst?.currentMediaItem)
@@ -333,6 +339,16 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     }
 
     // ---------------------------------------------------------------- layout helpers
+
+    /** A swipe interrupted by e.g. a settings screen must never leave the text shifted. */
+    private fun resetIfIdle() {
+        val v = views ?: return
+        if (dragging || committing || grabbed || isTracking || settle != null) return
+        if (currentC != 0f || v.textLayout.translationX != 0f || v.coverFrame.translationX != 0f) {
+            translate(0f)
+            setLayers(false)
+        }
+    }
 
     private fun fixMargins() {
         val v = views ?: return
@@ -456,8 +472,10 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
     private fun bindGhost(g: Ghost, item: MediaItem) {
         val v = views ?: return
         val md = item.mediaMetadata
-        g.title.text = md.title ?: ""
-        g.artist.text = md.artist ?: sheet.context.getString(R.string.unknown_artist)
+        val gt: CharSequence = md.title ?: ""
+        if (g.title.text.toString() != gt.toString()) g.title.text = gt
+        val ga: CharSequence = md.artist ?: sheet.context.getString(R.string.unknown_artist)
+        if (g.artist.text.toString() != ga.toString()) g.artist.text = ga
         val dt = detailsText(md)
         g.details.text = dt
         g.details.visibility = if (dt.isEmpty()) View.GONE else View.VISIBLE
@@ -684,12 +702,13 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         val vis = if (show) View.VISIBLE else View.INVISIBLE
         if (g.cover.visibility != vis) {
             g.cover.visibility = vis
-            g.text.visibility = vis
         }
+        // the text stays attached (alpha only) so the next title's marquee is already running
+        if (g.text.visibility != View.VISIBLE) g.text.visibility = View.VISIBLE
         g.cover.translationX = tx
         g.text.translationX = tx
         g.cover.alpha = coverAlpha
-        g.text.alpha = alpha
+        g.text.alpha = if (show) alpha else 0f
     }
 
     private fun setLayers(on: Boolean) {

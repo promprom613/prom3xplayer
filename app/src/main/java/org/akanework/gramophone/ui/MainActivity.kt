@@ -312,9 +312,11 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    fun addToPlaylistDialog(item: MediaItem) {
-        val song = Entry.ofMediaItem(item)
-        if (song == null) {
+    fun addToPlaylistDialog(item: MediaItem) = addToPlaylistDialog(listOf(item))
+
+    fun addToPlaylistDialog(items: List<MediaItem>) {
+        val songs = items.mapNotNull { Entry.ofMediaItem(it) }
+        if (songs.isEmpty()) {
             P3xToast.makeText(
                 this@MainActivity,
                 getString(R.string.edit_playlist_failed, "song == null"),
@@ -365,7 +367,7 @@ class MainActivity : BaseActivity() {
                             PlaylistAdapter.playlistNameDialog(this@MainActivity,
                                 R.string.create_playlist, "",
                                 { ItemManipulator.getDefaultPlaylistFile(it) }) { name ->
-                                addToPlaylist(null, name, listOf(song))
+                                addToPlaylist(null, name, songs)
                             }
                             return@setItems
                         }
@@ -374,7 +376,7 @@ class MainActivity : BaseActivity() {
                             ContentUris.withAppendedId(
                                 @Suppress("deprecation") MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
                                 pl.id!!
-                            ), null, listOf(song)
+                            ), null, songs
                         )
                     }
                     .setNegativeButton(android.R.string.cancel) { _, _ -> }
@@ -1045,6 +1047,7 @@ class MainActivity : BaseActivity() {
         // controller not connected yet (first launch, coming back from Recents): keep what is
         // on screen, do not flicker between the big button and the mini player
         if (p == null) return
+        if (p.mediaItemCount == 0) playerBottomSheet.hideIfEmpty()
         val idle = p.mediaItemCount == 0 && playerBottomSheet.visible
         if (idle) {
             // only show after the state has been stable for a moment
