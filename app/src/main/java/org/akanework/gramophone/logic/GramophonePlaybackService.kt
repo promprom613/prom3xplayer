@@ -609,7 +609,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                     )
                 )
-                .setSystemUiPlaybackResumptionOptIn(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                .setSystemUiPlaybackResumptionOptIn(false)
                 // Workaround for AA bug where content cannot be scrolled (androidx/media#2192)
                 .setPeriodicPositionUpdateEnabled(false)
                 .build()
@@ -643,59 +643,9 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
                 )
             }
         }
-        scope.launch {
-            lastPlayedManager.restore { items ->
-                if (mediaSession == null) return@restore
-                if (items != null) {
-                    val list = mapMediaItemsForFavorites(items.items.mediaItems)
-                    withContext(Dispatchers.Main) {
-                        if (lastPlayedManager.allowSavingState)
-                            return@withContext // media items were already applied to player
-                        try {
-                            if (list.size >= items.items.startIndex) {
-                                endedWorkaroundPlayer?.setMediaItems(
-                                    list,
-                                    items.items.startIndex,
-                                    items.items.startPositionMs,
-                                    items.title,
-                                    false, /* TODO(MQ) */
-                                    true, /* TODO(MQ) */
-                                    items.isEnded,
-                                    items.repeatMode,
-                                    items.shuffle,
-                                    items.seed,
-                                    items.playbackParameters,
-                                )
-                            } else {
-                                endedWorkaroundPlayer?.setMediaItems(
-                                    list,
-                                    C.INDEX_UNSET,
-                                    C.TIME_UNSET,
-                                    items.title,
-                                    false, /* TODO(MQ) */
-                                    true, /* TODO(MQ) */
-                                    items.isEnded,
-                                    items.repeatMode,
-                                    items.shuffle,
-                                    items.seed,
-                                    items.playbackParameters,
-                                )
-                                Log.w(TAG, "failed to restore index")
-                            }
-                        } catch (e: IllegalSeekPositionException) {
-                            Log.e(TAG, "failed to restore", e)
-                        }
-                        if (mediaSession?.connectedControllers?.find {
-                                it.connectionHints
-                                    .getBoolean("PrepareWhenReady", false)
-                            } != null) {
-                            handler.post { endedWorkaroundPlayer?.prepare() }
-                        }
-                    }
-                } else
-                    lastPlaylistLoaded.complete(Unit)
-            }
-        }
+        // the app always starts empty: forget whatever queue was saved before
+        getSharedPreferences("LastPlayedManager", 0).edit().clear().apply()
+        lastPlaylistLoaded.complete(Unit)
         scope.launch(Dispatchers.Default) {
             gramophoneApplication.reader.playlistListFlow.map { it.find { p -> p is Favorite } }
                 .collect { list ->
@@ -863,7 +813,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         endedWorkaroundPlayer!!.stop()
         handler.removeCallbacks(timer)
         handler.removeCallbacks(sendLyrics)
-        mediaSession!!.setOptOutOfMediaButtonPlaybackResumption(controller!!.currentTimeline.isEmpty)
+        mediaSession!!.setOptOutOfMediaButtonPlaybackResumption(true)
         proxy?.let {
             it.adapter.closeProfileProxy(BluetoothProfile.A2DP, it.a2dp)
         }
@@ -1406,6 +1356,7 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         controller: MediaSession.ControllerInfo,
         isForPlayback: Boolean
     ): ListenableFuture<MediaItemsWithStartPosition> {
+        if (true) return Futures.immediateFailedFuture(UnsupportedOperationException("no resumption"))
         val settable = SettableFuture.create<MediaItemsWithStartPosition>()
         if (isForPlayback) {
             scope.launch {
@@ -1772,7 +1723,6 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
 
     override fun onTimelineChanged(timeline: Timeline, reason: @Player.TimelineChangeReason Int) {
         if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) {
-            lastPlayedManager.allowSavingState = true
             lastPlaylistLoaded.complete(Unit)
             refreshMediaButtonCustomLayout()
             if (!computeRgMode(false))

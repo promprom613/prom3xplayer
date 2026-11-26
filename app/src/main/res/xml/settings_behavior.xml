@@ -88,6 +88,15 @@
 
         <SwitchPreferenceCompat
             android:defaultValue="false"
+            android:key="p3x_random_cover"
+            android:layout="@layout/preference_switch"
+            android:summary="@string/p3x_pref_random_cover_summary"
+            android:title="@string/p3x_pref_random_cover"
+            android:widgetLayout="@layout/preference_switch_widget"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
             android:key="p3x_scroll_titles"
             android:layout="@layout/preference_switch"
             android:summary="@string/p3x_pref_scroll_titles_summary"

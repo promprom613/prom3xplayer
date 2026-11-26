@@ -146,6 +146,10 @@ open class MyRecyclerView : FixOnItemTouchListenerRecyclerView,
         }
     }
 
+    // flings glide a bit further so the list does not die out early
+    override fun fling(velocityX: Int, velocityY: Int): Boolean =
+        super.fling((velocityX * 1.25f).toInt(), (velocityY * 1.25f).toInt())
+
     override fun onScrollStateChanged(state: Int) {
         super.onScrollStateChanged(state)
         if (state == SCROLL_STATE_DRAGGING) {
@@ -175,11 +179,15 @@ open class MyRecyclerView : FixOnItemTouchListenerRecyclerView,
                     })
                 }
                 .useMd2Style()
-                .setThumbDrawable(android.graphics.drawable.GradientDrawable().apply {
-                    setColor(0xCCBDBDBD.toInt())
+                .setThumbDrawable(run {
                     val d = resources.displayMetrics.density
-                    cornerRadius = 6 * d
-                    setSize((12 * d).toInt(), (56 * d).toInt())
+                    val bar = android.graphics.drawable.GradientDrawable().apply {
+                        setColor(0xCCBDBDBD.toInt())
+                        cornerRadius = 6 * d
+                        setSize((12 * d).toInt(), (56 * d).toInt())
+                    }
+                    // the empty space to the left of the visible bar is part of the grab area
+                    android.graphics.drawable.InsetDrawable(bar, (24 * d).toInt(), 0, 0, 0)
                 })
                 .setTrackDrawable(
                     AppCompatResources.getDrawable(
@@ -245,6 +253,13 @@ open class MyRecyclerView : FixOnItemTouchListenerRecyclerView,
             super.showScrollbar(trackView, thumbView)
             this.trackViewCache = trackView
             this.thumbViewCache = thumbView
+            // the system back gesture must not steal grabs on the scroll bar
+            if (android.os.Build.VERSION.SDK_INT >= 29) {
+                thumbView.post {
+                    thumbView.systemGestureExclusionRects = listOf(
+                        android.graphics.Rect(0, 0, thumbView.width, thumbView.height))
+                }
+            }
         }
 
         // the scroll bar stays where it is, it never fades out

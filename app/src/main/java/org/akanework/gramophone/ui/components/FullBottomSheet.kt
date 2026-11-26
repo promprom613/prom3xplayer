@@ -1380,7 +1380,11 @@ class FullBottomSheet
             loopTransition.apply {
                 addUpdateListener { animation ->
                     val progressColor = animation.animatedValue as Int
-                    bottomSheetLoopButton.iconTint = ColorStateList.valueOf(p3xBoost(progressColor))
+                    val acc = p3xBoost(progressColor)
+                    bottomSheetLoopButton.iconTint = ColorStateList(
+                        arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                        intArrayOf(acc, androidx.core.graphics.ColorUtils.setAlphaComponent(acc, 110))
+                    )
                 }
                 duration = BACKGROUND_COLOR_TRANSITION_SEC
             }
@@ -1474,12 +1478,15 @@ class FullBottomSheet
                 ColorStateList.valueOf(colorOnSurface)
             bottomSheetPlaybackSpeedButton.iconTint =
                 ColorStateList.valueOf(colorOnSurface)
+            p3xAccent = p3xBoost(colorPrimary)
             bottomSheetPlaylistButton.iconTint =
-                ColorStateList.valueOf(colorOnSurface)
+                ColorStateList.valueOf(p3xAccent)
             bottomSheetShuffleButton.iconTint =
                 selectorBackground
-            bottomSheetLoopButton.iconTint =
-                selectorBackground
+            bottomSheetLoopButton.iconTint = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                intArrayOf(p3xAccent, androidx.core.graphics.ColorUtils.setAlphaComponent(p3xAccent, 110))
+            )
             bottomSheetLyricButton.iconTint =
                 ColorStateList.valueOf(colorOnSurface)
             bottomSheetFavoriteButton.iconTint =

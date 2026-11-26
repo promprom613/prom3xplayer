@@ -39,6 +39,7 @@ class SongSwipeCallback(
     private val edge = 28.dpToPx(context)
     private var helper: ItemTouchHelper? = null
     private var touchListener: RecyclerView.OnItemTouchListener? = null
+    private var inScrollZone = false
 
     private val decoration = object : RecyclerView.ItemDecoration() {
         override fun onDraw(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
@@ -80,6 +81,10 @@ class SongSwipeCallback(
         // it starts at the very edge of the screen, which stays free for changing tabs.
         touchListener = object : RecyclerView.SimpleOnItemTouchListener() {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                if (e.actionMasked == MotionEvent.ACTION_DOWN) {
+                    // a touch on the fast scroll bar must never start a row swipe
+                    inScrollZone = e.x > rv.width - 36 * rv.resources.displayMetrics.density
+                }
                 if (e.actionMasked == MotionEvent.ACTION_DOWN && canSwipe()) {
                     rv.parent?.requestDisallowInterceptTouchEvent(
                         e.x > edge && e.x < rv.width - edge
@@ -102,7 +107,7 @@ class SongSwipeCallback(
         recyclerView: RecyclerView,
         viewHolder: RecyclerView.ViewHolder
     ): Int {
-        if (viewHolder !is BaseAdapter.ViewHolder || !canSwipe()) return 0
+        if (inScrollZone || viewHolder !is BaseAdapter.ViewHolder || !canSwipe()) return 0
         val pos = viewHolder.bindingAdapterPosition
         if (pos == RecyclerView.NO_POSITION || songAt(pos) == null) return 0
         return super.getMovementFlags(recyclerView, viewHolder)

@@ -300,6 +300,52 @@ object CoilArtPipeline {
             options: Options,
             imageLoader: ImageLoader
         ): Fetcher {
+            val inner = innerFetcher(data, options, imageLoader)
+            return Fetcher {
+                var err: Exception? = null
+                val res: FetchResult? = try {
+                    inner.fetch()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    err = e
+                    null
+                }
+                if (res != null) return@Fetcher res
+                val rnd = p3xRandomCover(options, data.id)
+                if (rnd != null) return@Fetcher rnd
+                val e2 = err
+                if (e2 != null) throw e2
+                null
+            }
+        }
+
+        private fun p3xRandomCover(options: Options, id: Long): FetchResult? {
+            try {
+                if (!androidx.preference.PreferenceManager.getDefaultSharedPreferences(
+                        options.context.applicationContext)
+                        .getBoolean("p3x_random_cover", false)) return null
+                val pool = File(options.context.cacheDir, "p3x_art").listFiles { f ->
+                    f.name.endsWith(".img") && f.length() > 0 &&
+                        !f.name.startsWith(id.toString() + "_")
+                }?.sortedBy { it.name } ?: return null
+                if (pool.isEmpty()) return null
+                val pick = pool[Math.floorMod(id.hashCode() * 31 + 7, pool.size)]
+                return SourceFetchResult(
+                    source = ImageSource(pick.toOkioPath(), options.fileSystem),
+                    mimeType = null,
+                    dataSource = DataSource.DISK,
+                )
+            } catch (e: Exception) {
+                return null
+            }
+        }
+
+        private fun innerFetcher(
+            data: LoadAudioCoverData,
+            options: Options,
+            imageLoader: ImageLoader
+        ): Fetcher {
             return Fetcher {
                 val artCache = P3xArtCache.fileFor(options.context, data.id, data.songFile)
                 if (artCache != null && artCache.length() > 0) {

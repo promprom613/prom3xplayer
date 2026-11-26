@@ -505,6 +505,13 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    private fun p3xSameEntry(a: PlaylistSerializer.Entry, b: PlaylistSerializer.Entry): Boolean =
+        a.locations.any { la -> b.locations.any { lb ->
+            la == lb || (la.path != null && la.path == lb.path) ||
+                (la.scheme != "file" && la.scheme == lb.scheme &&
+                    la.lastPathSegment == lb.lastPathSegment)
+        } }
+
     private suspend fun doAddToPlaylist(resultCode: Int, data: Bundle) {
         val uriIn = BundleCompat.getParcelable(data, "Uri", Uri::class.java)
         val errorString = if (uriIn != null) R.string.edit_playlist_failed else
@@ -519,8 +526,8 @@ class MainActivity : BaseActivity() {
                 val uri = uriIn ?: ItemManipulator.createPlaylist(this,
                     File(name!!))
                 // picking a playlist that already has the song removes it again
-                val already = uriIn != null && songs.all { s -> readback.entries.any { it == s } }
-                val newEntries = if (already) readback.entries.filter { e -> songs.none { it == e } }
+                val already = uriIn != null && songs.all { s -> readback.entries.any { p3xSameEntry(it, s) } }
+                val newEntries = if (already) readback.entries.filter { e -> songs.none { p3xSameEntry(it, e) } }
                     else readback.entries + songs
                 ItemManipulator.setPlaylistContent(this, uri, readback
                     .copy(entries = newEntries), uriIn == null)
@@ -1023,12 +1030,30 @@ class MainActivity : BaseActivity() {
      */
     fun getPlayer() = controllerViewModel.get()
 
+    private val idleHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val idleShow = Runnable {
+        val b = findViewById<android.view.View>(R.id.idle_play) ?: return@Runnable
+        val p = getPlayer()
+        if (p != null && p.mediaItemCount == 0 && playerBottomSheet.visible)
+            b.visibility = android.view.View.VISIBLE
+    }
+
     private fun updateIdlePlay() {
         if (!::playerBottomSheet.isInitialized) return
         val b = findViewById<android.view.View>(R.id.idle_play) ?: return
         val p = getPlayer()
-        val idle = p != null && p.mediaItemCount == 0 && playerBottomSheet.visible
-        b.visibility = if (idle) android.view.View.VISIBLE else android.view.View.GONE
+        // controller not connected yet (first launch, coming back from Recents): keep what is
+        // on screen, do not flicker between the big button and the mini player
+        if (p == null) return
+        val idle = p.mediaItemCount == 0 && playerBottomSheet.visible
+        if (idle) {
+            // only show after the state has been stable for a moment
+            idleHandler.removeCallbacks(idleShow)
+            idleHandler.postDelayed(idleShow, 400)
+        } else {
+            idleHandler.removeCallbacks(idleShow)
+            b.visibility = android.view.View.GONE
+        }
     }
 
     inline val reader

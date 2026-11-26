@@ -1376,6 +1376,8 @@ supporting local search. This string is displayed in the search bar when using G
     <string name="p3x_tut_15_body">Long-press any song and choose Set as ringtone or Set as notification sound. You can also do it from Settings, Behavior, Sounds. Android asks once to allow modifying system settings.</string>
     <string name="p3x_tut_16_title">Make it yours</string>
     <string name="p3x_tut_16_body">Settings has themes including pure black, lyrics options, audio effects, library filters and more. Replay this tour any time from Settings, Tutorial. Enjoy the music!</string>
+    <string name="p3x_pref_random_cover">Random cover for songs without art</string>
+    <string name="p3x_pref_random_cover_summary">Songs with no cover borrow a random cover from other songs. Applies to newly loaded covers.</string>
     <string name="p3x_pref_scroll_titles">Scrolling song names</string>
     <string name="p3x_pref_scroll_titles_summary">Long song names scroll sideways in the lists, like in the player. May use a bit more battery.</string>
     <string name="p3x_power_off">Turn everything off</string>

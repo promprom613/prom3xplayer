@@ -189,7 +189,10 @@ class PlaylistQueueSheet(
     override fun show() {
         super.show()
         val view = findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
-        view!!.post {
+        // queue sheet is always AMOLED black, like the player
+        view!!.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.BLACK)
+        window?.navigationBarColor = android.graphics.Color.BLACK
+        view.post {
             BottomSheetBehavior.from(view).state = BottomSheetBehavior.STATE_EXPANDED
         }
     }
