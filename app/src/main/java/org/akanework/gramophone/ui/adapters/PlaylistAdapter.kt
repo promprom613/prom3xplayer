@@ -41,6 +41,7 @@ import androidx.core.view.iterator
 import androidx.core.widget.addTextChangedListener
 import androidx.media3.common.util.Log
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import org.akanework.gramophone.logic.p3xBlack
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.CoroutineScope
@@ -426,6 +427,7 @@ class PlaylistAdapter(
                 }
                 .setNegativeButton(android.R.string.cancel) { _, _ -> }
                 .show()
+            d.p3xBlack()
             val et = DialogCompat.requireViewById(d, R.id.editText) as TextInputEditText
             val b = d.getButton(DialogInterface.BUTTON_POSITIVE)
             val inL = DialogCompat.requireViewById(d, R.id.inputLayout) as TextInputLayout

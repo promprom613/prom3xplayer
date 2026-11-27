@@ -1351,6 +1351,32 @@ class GramophonePlaybackService : MediaLibraryService(), MediaSessionService.Lis
         }
     }
 
+    // Headphone buttons and "control music with volume keys" arrive here. They used to start the
+    // next song without sound, so skips are done directly on the player, like the notification does.
+    override fun onMediaButtonEvent(
+        session: MediaSession,
+        controllerInfo: MediaSession.ControllerInfo,
+        intent: Intent
+    ): Boolean {
+        val ev: android.view.KeyEvent? = IntentCompat.getParcelableExtra(
+            intent, Intent.EXTRA_KEY_EVENT, android.view.KeyEvent::class.java
+        )
+        if (ev == null) return false
+        val isNext = ev.keyCode == android.view.KeyEvent.KEYCODE_MEDIA_NEXT
+        val isPrev = ev.keyCode == android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS
+        if (!isNext && !isPrev) return false
+        if (ev.action == android.view.KeyEvent.ACTION_DOWN && ev.repeatCount == 0) {
+            val p = session.player
+            if (p.mediaItemCount > 0) {
+                val wasPlaying = p.playWhenReady
+                if (p.playbackState == Player.STATE_IDLE) p.prepare()
+                if (isNext) p.seekToNext() else p.seekToPrevious()
+                if (wasPlaying) p.play()
+            }
+        }
+        return true
+    }
+
     override fun onPlaybackResumption(
         mediaSession: MediaSession,
         controller: MediaSession.ControllerInfo,

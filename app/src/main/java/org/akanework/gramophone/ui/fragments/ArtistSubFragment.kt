@@ -47,6 +47,9 @@ import org.akanework.gramophone.ui.adapters.SongAdapter
  * @see GeneralSubFragment
  */
 class ArtistSubFragment : BaseFragment(true), PopupTextProvider {
+    override val allowImageBackground: Boolean
+        get() = true
+
     companion object {
         private const val TAG = "ArtistSubFragment"
     }

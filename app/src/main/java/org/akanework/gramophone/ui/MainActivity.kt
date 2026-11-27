@@ -104,6 +104,7 @@ import org.akanework.gramophone.ui.fragments.ViewPagerFragment
 import org.nift4.mediastorecompat.MediaStoreCompat
 import uk.akane.libphonograph.dynamicitem.Favorite
 import uk.akane.libphonograph.manipulator.ItemManipulator
+import org.akanework.gramophone.logic.p3xBlack
 import uk.akane.libphonograph.manipulator.PlaylistSerializer
 import uk.akane.libphonograph.manipulator.PlaylistSerializer.Entry
 import java.io.File
@@ -380,7 +381,7 @@ class MainActivity : BaseActivity() {
                         )
                     }
                     .setNegativeButton(android.R.string.cancel) { _, _ -> }
-                    .show()
+                    .show().p3xBlack()
             }
         }
     }

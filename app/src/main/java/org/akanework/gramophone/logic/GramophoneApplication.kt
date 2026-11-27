@@ -335,8 +335,12 @@ class GramophoneApplication : Application(), SingletonImageLoader.Factory,
                 add(CoilArtPipeline.ThumbnailMapper())
                 add(CoilArtPipeline.AudioCoverMapper())
                 add(CoilArtPipeline.AlbumThumbnailMapper())
-                add(CoilArtPipeline.ThumbnailFetcherFactory())
-                add(CoilArtPipeline.AlbumThumbnailFetcherFactory())
+                add(CoilArtPipeline.RandomFallbackFactory(CoilArtPipeline.ThumbnailFetcherFactory()) {
+                    android.content.ContentUris.parseId(it.uri)
+                })
+                add(CoilArtPipeline.RandomFallbackFactory(CoilArtPipeline.AlbumThumbnailFetcherFactory()) {
+                    android.content.ContentUris.parseId(it.songUri)
+                })
                 add(CoilArtPipeline.SongCoverFetcherFactory())
             }
             .run {

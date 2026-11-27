@@ -8,6 +8,7 @@
         android:id="@+id/appbarlayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
         android:stateListAnimator="@null">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -17,6 +18,7 @@
             android:layout_height="?attr/collapsingToolbarLayoutLargeSize"
             app:collapsedTitleTextAppearance="?textAppearanceTitleLarge"
             app:collapsedTitleTextColor="?attr/colorOnSurface"
+            app:contentScrim="@android:color/transparent"
             app:expandedTitleMarginStart="24dp"
             app:expandedTitleTextAppearance="?textAppearanceHeadlineLarge"
             app:expandedTitleTextColor="?attr/colorOnSurface"

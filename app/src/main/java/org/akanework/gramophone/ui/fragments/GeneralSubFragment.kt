@@ -54,6 +54,9 @@ import uk.akane.libphonograph.items.Playlist
  * @author AkaneTan, nift4
  */
 class GeneralSubFragment : BaseFragment(true) {
+    override val allowImageBackground: Boolean
+        get() = true
+
     companion object {
         private const val TAG = "GeneralSubFragment"
     }

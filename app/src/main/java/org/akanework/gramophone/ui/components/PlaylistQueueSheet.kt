@@ -205,21 +205,9 @@ class PlaylistQueueSheet(
 
     /** The list uses the same blurred background as the player; the top bar stays black. */
     private fun p3xApplyBackground() {
-        try {
-            val d = activity.findViewById<android.widget.ImageView>(R.id.bg_blur)?.drawable
-            if (d == null) {
-                recyclerView.background = null
-                return
-            }
-            val copy = d.constantState?.newDrawable()?.mutate() ?: d
-            recyclerView.background = android.graphics.drawable.LayerDrawable(
-                arrayOf(
-                    org.akanework.gramophone.logic.P3xCropDrawable(copy),
-                    android.graphics.drawable.ColorDrawable(0x99000000.toInt())
-                )
-            )
-        } catch (e: Exception) {
-            recyclerView.background = null
+        if (recyclerView.background is org.akanework.gramophone.logic.P3xLiveBackground) return
+        recyclerView.background = org.akanework.gramophone.logic.P3xLiveBackground {
+            activity.findViewById<android.widget.ImageView>(R.id.bg_blur)?.drawable
         }
     }
 
@@ -227,7 +215,6 @@ class PlaylistQueueSheet(
         mediaItem: MediaItem?,
         reason: @Player.MediaItemTransitionReason Int
     ) {
-        recyclerView.postDelayed({ p3xApplyBackground() }, 700)
         if (mqState == null || mqState?.isDetached() == true) return
         val i = instance?.currentMediaItemIndex
         playlistAdapter.currentMediaItemIndex = i?.let { mqState!!.playlist.first.indexOf(i) }

@@ -109,6 +109,74 @@ object CoilArtPipeline {
         }
     }
 
+    internal fun p3xRandomCover(options: Options, id: Long): FetchResult? {
+        try {
+            val ctx = options.context.applicationContext
+            if (!androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx)
+                    .getBoolean("p3x_random_cover", true)) return null
+            val dir = File(ctx.cacheDir, "p3x_art")
+            val map = ctx.getSharedPreferences("p3x_random_cover_map", 0)
+            // the same song keeps the same borrowed cover
+            val saved = map.getString("c$id", null)?.let { File(dir, it) }
+            if (saved != null && saved.length() > 0) {
+                return SourceFetchResult(
+                    source = ImageSource(saved.toOkioPath(), options.fileSystem),
+                    mimeType = null,
+                    dataSource = DataSource.DISK,
+                )
+            }
+            val pool = dir.listFiles { f ->
+                f.name.endsWith(".img") && f.length() > 0 &&
+                    !f.name.startsWith(id.toString() + "_")
+            }?.sortedBy { it.name } ?: return null
+            if (pool.isEmpty()) return null
+            val pick = pool[Math.floorMod(id.hashCode() * 31 + 7, pool.size)]
+            map.edit().putString("c$id", pick.name).apply()
+            return SourceFetchResult(
+                source = ImageSource(pick.toOkioPath(), options.fileSystem),
+                mimeType = null,
+                dataSource = DataSource.DISK,
+            )
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+
+    /** Gives any thumbnail request a borrowed cover when the song itself has no art. */
+    internal fun p3xWrap(inner: Fetcher, options: Options, id: Long?): Fetcher = Fetcher {
+        var err: Exception? = null
+        val res: FetchResult? = try {
+            inner.fetch()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            err = e
+            null
+        }
+        if (res != null) return@Fetcher res
+        val rnd = if (id != null) p3xRandomCover(options, id) else null
+        if (rnd != null) return@Fetcher rnd
+        val e2 = err
+        if (e2 != null) throw e2
+        null
+    }
+
+    class RandomFallbackFactory<T : Any>(
+        private val delegate: Fetcher.Factory<T>,
+        private val idOf: (T) -> Long?
+    ) : Fetcher.Factory<T> {
+        override fun create(data: T, options: Options, imageLoader: ImageLoader): Fetcher? {
+            val f = delegate.create(data, options, imageLoader) ?: return null
+            val id = try {
+                idOf(data)
+            } catch (e: Exception) {
+                null
+            }
+            return p3xWrap(f, options, id)
+        }
+    }
+
     class AlbumThumbnailKeyer : Keyer<AlbumThumbnailData> {
         override fun key(data: AlbumThumbnailData, options: Options): String {
             return data.toString()
@@ -317,39 +385,6 @@ object CoilArtPipeline {
                 val e2 = err
                 if (e2 != null) throw e2
                 null
-            }
-        }
-
-        private fun p3xRandomCover(options: Options, id: Long): FetchResult? {
-            try {
-                val ctx = options.context.applicationContext
-                if (!androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx)
-                        .getBoolean("p3x_random_cover", true)) return null
-                val dir = File(ctx.cacheDir, "p3x_art")
-                val map = ctx.getSharedPreferences("p3x_random_cover_map", 0)
-                // the same song keeps the same borrowed cover
-                val saved = map.getString("c$id", null)?.let { File(dir, it) }
-                if (saved != null && saved.length() > 0) {
-                    return SourceFetchResult(
-                        source = ImageSource(saved.toOkioPath(), options.fileSystem),
-                        mimeType = null,
-                        dataSource = DataSource.DISK,
-                    )
-                }
-                val pool = dir.listFiles { f ->
-                    f.name.endsWith(".img") && f.length() > 0 &&
-                        !f.name.startsWith(id.toString() + "_")
-                }?.sortedBy { it.name } ?: return null
-                if (pool.isEmpty()) return null
-                val pick = pool[Math.floorMod(id.hashCode() * 31 + 7, pool.size)]
-                map.edit().putString("c$id", pick.name).apply()
-                return SourceFetchResult(
-                    source = ImageSource(pick.toOkioPath(), options.fileSystem),
-                    mimeType = null,
-                    dataSource = DataSource.DISK,
-                )
-            } catch (e: Exception) {
-                return null
             }
         }
 
