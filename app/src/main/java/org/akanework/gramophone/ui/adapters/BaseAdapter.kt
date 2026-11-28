@@ -428,10 +428,25 @@ abstract class BaseAdapter<T : Any>(
                 b.setOnClickListener(null)
             }
         }
-        holder.songCover.load(coverOf(item)) {
+        val coverUri = coverOf(item)
+        val boundPos = holder.bindingAdapterPosition
+        holder.songCover.load(coverUri) {
             placeholderScaleToFit(defaultCover)
             crossfade(true)
             error(defaultCover)
+            listener(object : coil3.request.ImageRequest.Listener {
+                override fun onError(
+                    request: coil3.request.ImageRequest,
+                    result: coil3.request.ErrorResult
+                ) {
+                    // no cover of its own: borrow one from another song
+                    val sid = coverUri?.pathSegments?.getOrNull(1)?.toLongOrNull() ?: return
+                    if (holder.bindingAdapterPosition != boundPos) return
+                    val f = org.akanework.gramophone.logic.P3xArtCache
+                        .randomFor(holder.songCover.context, sid) ?: return
+                    holder.songCover.load(f) { crossfade(true) }
+                }
+            })
         }
         holder.itemView.setOnClickListener {
             val pos = holder.bindingAdapterPosition

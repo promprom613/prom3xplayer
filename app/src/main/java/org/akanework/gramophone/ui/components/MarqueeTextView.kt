@@ -19,6 +19,8 @@ package org.akanework.gramophone.ui.components
 
 import android.content.Context
 import android.graphics.Rect
+import android.os.SystemClock
+import android.text.TextPaint
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatTextView
 
@@ -57,12 +59,56 @@ constructor(
         isHorizontalFadingEdgeEnabled = true
     }
 
+    /**
+     * When on, the scrolling is drawn here (not by the framework) and its position comes from a
+     * clock shared by every view showing the same text. The title that slides in during a swipe
+     * and the title that replaces it after the swipe therefore scroll as ONE, with no restart.
+     */
+    var syncMarquee: Boolean = false
+        set(v) {
+            field = v
+            ellipsize = if (v) null else android.text.TextUtils.TruncateAt.MARQUEE
+            invalidate()
+        }
+
+    /** Start (or keep) scrolling this view's current text, skipping the initial hold. */
+    fun primeMarquee() {
+        if (syncMarquee) P3xMarqueeClock.prime(text?.toString() ?: "")
+    }
+
+    private val syncPaint = TextPaint()
+
     override fun isFocused(): Boolean = true
 
     private var lastLayout: android.text.Layout? = null
 
     // a relayout (e.g. after pressing a button) silently stops the marquee: restart it once
     override fun onDraw(canvas: android.graphics.Canvas) {
+        if (syncMarquee) {
+            val t = text?.toString() ?: ""
+            val lay = layout
+            val avail = width - compoundPaddingLeft - compoundPaddingRight
+            if (lay == null || t.isEmpty() || avail <= 0 ||
+                paint.measureText(t) <= avail) {
+                super.onDraw(canvas)
+                return
+            }
+            val d = resources.displayMetrics.density
+            syncPaint.set(paint)
+            syncPaint.color = currentTextColor
+            val tw = syncPaint.measureText(t)
+            val cycle = tw + 56f * d
+            val off = P3xMarqueeClock.offset(t, 42f * d, cycle)
+            val left = compoundPaddingLeft.toFloat()
+            val base = (extendedPaddingTop + lay.getLineBaseline(0)).toFloat()
+            canvas.save()
+            canvas.clipRect(left, 0f, (width - compoundPaddingRight).toFloat(), height.toFloat())
+            canvas.drawText(t, left - off, base, syncPaint)
+            canvas.drawText(t, left - off + cycle, base, syncPaint)
+            canvas.restore()
+            postInvalidateOnAnimation()
+            return
+        }
         super.onDraw(canvas)
         if (layout !== lastLayout) {
             lastLayout = layout
@@ -87,5 +133,45 @@ constructor(
         if (hasWindowFocus) {
             super.onWindowFocusChanged(true)
         }
+    }
+}
+
+/** Shared scroll clock: same text = same scroll position, whichever view draws it. */
+object P3xMarqueeClock {
+    private const val HOLD_MS = 900L
+    private const val STALE_MS = 1500L
+    private val start = HashMap<String, Long>()
+    private val seen = HashMap<String, Long>()
+
+    /** Called for a title that is not on screen yet but will be: it should already be moving. */
+    fun prime(text: String) {
+        val now = SystemClock.uptimeMillis()
+        val s = seen[text]
+        if (s == null || now - s > STALE_MS) {
+            start[text] = now - HOLD_MS
+        }
+        seen[text] = now + 60_000L // keep the position alive until the swipe is done
+    }
+
+    fun offset(text: String, pxPerSec: Float, cycle: Float): Float {
+        val now = SystemClock.uptimeMillis()
+        val s = seen[text]
+        if (s == null || now - s > STALE_MS || start[text] == null) {
+            start[text] = now
+        }
+        seen[text] = now
+        if (start.size > 64) {
+            val it = seen.entries.iterator()
+            while (it.hasNext()) {
+                val e = it.next()
+                if (now - e.value > 5 * STALE_MS) {
+                    start.remove(e.key)
+                    it.remove()
+                }
+            }
+        }
+        val el = now - (start[text] ?: now) - HOLD_MS
+        if (el <= 0) return 0f
+        return ((el / 1000f) * pxPerSec) % cycle
     }
 }

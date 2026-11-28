@@ -46,4 +46,30 @@ object P3xArtCache {
             // ignore
         }
     }
+
+    /**
+     * A cover borrowed from another song, for songs without one. The same song always gets the
+     * same borrowed cover once picked. Null when the option is off or nothing is cached yet.
+     */
+    fun randomFor(context: Context, id: Long): File? {
+        try {
+            val ctx = context.applicationContext
+            if (!androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx)
+                    .getBoolean("p3x_random_cover", true)) return null
+            val dir = File(ctx.cacheDir, DIR)
+            val map = ctx.getSharedPreferences("p3x_random_cover_map", 0)
+            val saved = map.getString("c$id", null)?.let { File(dir, it) }
+            if (saved != null && saved.length() > 0) return saved
+            val pool = dir.listFiles { f ->
+                f.name.endsWith(".img") && f.length() > 0 &&
+                    !f.name.startsWith(id.toString() + "_")
+            }?.sortedBy { it.name } ?: return null
+            if (pool.isEmpty()) return null
+            val pick = pool[Math.floorMod(id.hashCode() * 31 + 7, pool.size)]
+            map.edit().putString("c$id", pick.name).apply()
+            return pick
+        } catch (e: Exception) {
+            return null
+        }
+    }
 }

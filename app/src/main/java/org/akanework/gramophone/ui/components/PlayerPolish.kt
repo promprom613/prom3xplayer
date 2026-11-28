@@ -300,6 +300,9 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
             f<TextView>(R.id.ghost_artist_next) ?: return null,
             f<TextView>(R.id.ghost_details_next) ?: return null
         )
+        for (tv in listOf(title, artist, gPrev.title, gPrev.artist, gNext.title, gNext.artist)) {
+            (tv as? MarqueeTextView)?.syncMarquee = true
+        }
         return Views(
             cover, bg, dim, f<View>(R.id.bg_bottom_fade), f<View>(R.id.swipe_scrim), f<View>(R.id.p3x_lyric_box), f<View>(R.id.slider),
             details, title, artist, coverFrame, textLayout, gPrev, gNext
@@ -476,6 +479,8 @@ class PlayerPolish(private val sheet: FullBottomSheet, private val activity: Mai
         if (g.title.text.toString() != gt.toString()) g.title.text = gt
         val ga: CharSequence = md.artist ?: sheet.context.getString(R.string.unknown_artist)
         if (g.artist.text.toString() != ga.toString()) g.artist.text = ga
+        (g.title as? MarqueeTextView)?.primeMarquee()
+        (g.artist as? MarqueeTextView)?.primeMarquee()
         val dt = detailsText(md)
         g.details.text = dt
         g.details.visibility = if (dt.isEmpty()) View.GONE else View.VISIBLE
